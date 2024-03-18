@@ -1,0 +1,7 @@
+pandas
+numpy
+scipy
+matplotlib
+pint
+pint-pandas
+pyarrow     ## Needed for Pandas
