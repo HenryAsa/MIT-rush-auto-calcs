@@ -6,3 +6,5 @@ matplotlib
 pint
 pint-pandas
 pyarrow     ## Needed for Pandas
+scikit-learn
+geopy
