@@ -8,3 +8,5 @@ pint-pandas
 pyarrow     ## Needed for Pandas
 scikit-learn
 geopy
+basemap
+cartopy
