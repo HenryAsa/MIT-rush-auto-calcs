@@ -1,8 +1,9 @@
 import pandas as pd
+import os
+from typing import Iterable
 import scipy
 
-from typing import Iterable
-from utils import strip_df_of_units
+from utils import get_folder_from_filepath, strip_df_of_units
 
 
 def export_data_to_csv(
@@ -68,10 +69,12 @@ def export_data_to_csv(
     else:
         raise incorrect_type_error
 
+    os.makedirs(get_folder_from_filepath(filename), exist_ok=True)
+
     export_df.to_csv(filename)
 
 
-def mat_to_csv(mat_filepath, csv_filepath):
+def mat_to_csv(mat_filepath: str, csv_filepath: str) -> None:
     """
     Convert variables from a MATLAB .mat file to individual .csv files.
 
@@ -125,7 +128,7 @@ def mat_to_csv(mat_filepath, csv_filepath):
             print(f"Saved {key} to {specific_csv_filepath}")
 
 
-def mats_to_csv(mat_files, csv_filepath):
+def mats_to_csv(mat_files: Iterable[str], csv_filepath: str) -> None:
     """
     Convert variables from multiple MATLAB .mat files into a single
     .csv file.

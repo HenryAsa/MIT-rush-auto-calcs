@@ -81,7 +81,7 @@ def strip_df_of_units(
     raise incorrect_type_error
 
 
-def get_files_with_extension(directory: str, extension: str):
+def get_files_with_extension(directory: str, extension: str) -> list[str]:
     """
     Get all files with the specified extension in the given directory.
 
@@ -124,3 +124,33 @@ def get_files_with_extension(directory: str, extension: str):
                 files_with_extension.append(os.path.join(dirpath, filename))
 
     return files_with_extension
+
+
+def get_folder_from_filepath(filepath: str) -> str:
+    """
+    Get the folder path from a given file path.
+
+    This function extracts the directory portion of the provided file
+    path, effectively removing the file name and returning the path to
+    the directory containing the file.
+
+    Parameters
+    ----------
+    filepath : str
+        The full path to a file.
+
+    Returns
+    -------
+    str
+        The path to the directory containing the file.
+
+    Examples
+    --------
+    >>> get_folder_from_filepath('/home/user/file.txt')
+    '/home/user'
+    
+    >>> get_folder_from_filepath('C:\\Users\\file.txt')
+    'C:\\Users'
+
+    """
+    return os.path.dirname(filepath)
