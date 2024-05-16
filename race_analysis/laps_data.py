@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
-from utils import strip_df_of_units
 from geopy.distance import great_circle
 from sklearn.cluster import DBSCAN
+
+from .utils import strip_df_of_units
+
 
 def identify_starting_point(df: pd.DataFrame):
     """

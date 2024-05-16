@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from units import u, Q_
+from .units import u, Q_
 
 
 def set_df_column(

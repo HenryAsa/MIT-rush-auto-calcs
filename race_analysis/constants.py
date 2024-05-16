@@ -2,7 +2,7 @@
 RUSH Auto Works Constants
 """
 
-from units import u
+from .units import u
 
 #### DEFINE CONSTANTS FOR CALCS ####
 MASS_DRIVER = 80 * u.kg

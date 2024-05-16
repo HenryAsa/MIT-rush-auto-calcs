@@ -1,7 +1,7 @@
 import pandas as pd
 
-from columns import initialize_channels
-from laps_data import find_laps
+from .columns import initialize_channels
+from .laps_data import find_laps
 
 
 def generate_units_dict(csv_filepath: str, units: dict[str, str]) -> dict[str, str]:

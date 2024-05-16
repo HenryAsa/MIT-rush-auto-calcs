@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from utils import convert_to_magnitude
+from .utils import convert_to_magnitude
 
 def plot_race_data(
         race_data: pd.DataFrame,

@@ -3,7 +3,7 @@ import os
 from typing import Iterable
 import scipy
 
-from utils import get_folder_from_filepath, strip_df_of_units
+from .utils import get_folder_from_filepath, strip_df_of_units
 
 
 def export_data_to_csv(
