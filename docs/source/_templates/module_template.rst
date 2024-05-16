@@ -1,6 +1,12 @@
-{{ fullname | escape | underline}}
+{{ fullname.split('.')[-1] }}
+{{ underline }}
+
+.. currentModule:: {{ module }}
 
 .. automodule:: {{ fullname }}
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
    {% block attributes %}
    {% if attributes %}

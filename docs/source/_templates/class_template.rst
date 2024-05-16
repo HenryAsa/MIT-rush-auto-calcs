@@ -1,4 +1,5 @@
-{{ fullname | escape | underline}}
+{{ fullname.split('.')[-1] }}
+{{ underline }}
 
 .. currentmodule:: {{ module }}
 
