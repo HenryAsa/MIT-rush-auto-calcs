@@ -1,7 +1,10 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import os
+import pandas as pd
+from typing import Optional
 
-from .utils import convert_to_magnitude
+from .constants import PLOTS_DIRECTORY
+from .utils import convert_to_magnitude, get_filename, get_folder_from_filepath
 
 def plot_race_data(
         race_data: pd.DataFrame,
@@ -66,3 +69,56 @@ def plot_data(
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     # plt.show()
+
+
+def save_plot(
+        data_file: str,
+        name: Optional[str] = None,
+        lap_num: Optional[float] = None,
+    ) -> None:
+    """
+    Save a plot to a specified directory as a PDF file.
+
+    This function generates a plot and saves it as a PDF file in a
+    directory derived from the `data_file` name.  The plot title or a
+    provided name can be used as the filename.  An optional lap number
+    can be included in the directory path.
+
+    Parameters
+    ----------
+    data_file : str
+        The path to the data file used to determine the save location.
+    name : str, optional
+        The name of the file to save the plot as. If not provided, the
+        plot title is used.
+    lap_num : float, optional
+        The lap number to include in the directory path. If not
+        provided, no lap folder is created.
+
+    Returns
+    -------
+    None
+        This function does not return any value.
+
+    Examples
+    --------
+    Save a plot with default name and no lap number:
+    >>> save_plot('data/session1.csv')
+
+    Save a plot with a custom name:
+    >>> save_plot('data/session1.csv', name='custom_plot')
+
+    Save a plot with a lap number:
+    >>> save_plot('data/session1.csv', lap_num=1.0)
+    """
+    ax = plt.gca()
+
+    if name is None:    name = ax.get_title()
+    print(name)
+    lap_folder = f'Lap {lap_num}/' if lap_num is not None else ''
+
+    filepath = f'{PLOTS_DIRECTORY}/{get_filename(data_file).removesuffix('.csv')}/{lap_folder}{name}.pdf'
+    os.makedirs(get_folder_from_filepath(filepath), exist_ok=True)
+
+    plt.savefig(filepath)
+

@@ -31,6 +31,7 @@ RHO_AIR = 1.2041 * (u.kg / (u.m**3))        # Air density at 20 degrees C
 """Density of air at 20 degrees C"""
 ####################################
 
+
 #### DERIVED CONSTANTS ####
 VEHICLE_CROSS_SECTIONAL_AREA = VEHICLE_HEIGHT * VEHICLE_WIDTH
 """Frontal cross sectional area of the vehicle"""
@@ -38,3 +39,11 @@ VEHICLE_CROSS_SECTIONAL_AREA = VEHICLE_HEIGHT * VEHICLE_WIDTH
 MASS_VEHICLE = MASS_DRIVER + MASS_CAR
 """Mass of the vehicle including the driver"""
 ###########################
+
+
+#### DIRECTORIES ####
+DATA_DIRECTORY = 'data/formatted'
+"""Directory containing all of the parseable data"""
+PLOTS_DIRECTORY = 'plots'
+"""Directory containing all of the plots"""
+#####################

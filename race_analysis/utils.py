@@ -154,3 +154,31 @@ def get_folder_from_filepath(filepath: str) -> str:
 
     """
     return os.path.dirname(filepath)
+
+
+def get_filename(filepath: str) -> str:
+    """
+    Retrieve the base name of the file from a given filepath.
+
+    This function takes a full file path and returns only the
+    file name, excluding the directory path.
+
+    Parameters
+    ----------
+    filepath : str
+        The full path to the file.
+
+    Returns
+    -------
+    str
+        The base name of the file.
+
+    Examples
+    --------
+    >>> get_filename('/home/user/documents/file.txt')
+    'file.txt'
+
+    >>> get_filename('C:\\Users\\Documents\\file.txt')
+    'file.txt'
+    """
+    return os.path.basename(filepath)
