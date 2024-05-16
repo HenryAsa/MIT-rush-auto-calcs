@@ -114,11 +114,9 @@ def save_plot(
     ax = plt.gca()
 
     if name is None:    name = ax.get_title()
-    print(name)
     lap_folder = f'Lap {lap_num}/' if lap_num is not None else ''
 
-    filepath = f'{PLOTS_DIRECTORY}/{get_filename(data_file).removesuffix('.csv')}/{lap_folder}{name}.pdf'
+    filepath = f'{PLOTS_DIRECTORY}/{get_filename(data_file).removesuffix(".csv")}/{lap_folder}{name}.pdf'
     os.makedirs(get_folder_from_filepath(filepath), exist_ok=True)
 
     plt.savefig(filepath)
-

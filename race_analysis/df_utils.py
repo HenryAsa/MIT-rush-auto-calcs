@@ -69,8 +69,8 @@ def slice_into_df(
 
 def get_lap_indices(
         df: pd.DataFrame,
-        start_lap: int,
-        end_lap: int,
+        start_lap: Optional[int] = None,
+        end_lap: Optional[int] = None,
     ) -> dict[int: list[int, int]]:
     """
     Retrieve the start and end indices for given laps.
@@ -83,10 +83,14 @@ def get_lap_indices(
     df : pd.DataFrame
         The DataFrame containing race data, with at least a column 
         named 'Lap Number'.
-    start_lap : int
-        The starting lap number for which to find the indices.
-    end_lap : int
-        The ending lap number for which to find the indices.
+    start_lap : Optional[int], default=None
+        The starting lap number for which to find the indices.  By
+        default, the second lap will be used as the starting lap if
+        `start_lap` is not provided.
+    end_lap : Optional[int], default=None
+        The ending lap number for which to find the indices.  By
+        default, the second-to-last lap will be used as the ending lap
+        if `end_lap` is not provided.
 
     Returns
     -------
@@ -108,13 +112,22 @@ def get_lap_indices(
     Notes
     -----
     This function assumes that the DataFrame has a column named 
-    'Lap Number' and that the laps are sequentially indexed.
+    'Lap Number' and that the laps are sequentially indexed.  If lap
+    numbers are not provided, the second lap and second-to-last lap
+    are assumed to be the start/end lap respectively (typically the
+    first and laps have messy data, so by default they are excluded).
     """
+    lap_num_column = 'Lap Number'
     lap_indices: dict[int, list[int, int]] = {}
 
-    for lap_number in (start_lap, end_lap):
-        lap_start_index = df.loc[df['Lap Number'] == lap_number].index[0]
-        lap_end_index = df.loc[df['Lap Number'] == lap_number].index[-1]
+    if start_lap is None:
+        start_lap = 2
+    if end_lap is None:
+        end_lap = (df[lap_num_column].iloc[-1] - 1).magnitude
+
+    for lap_number in range(start_lap, end_lap + 1):
+        lap_start_index = df.loc[df[lap_num_column] == lap_number].index[0]
+        lap_end_index = df.loc[df[lap_num_column] == lap_number].index[-1]
         lap_indices[lap_number] = [lap_start_index, lap_end_index]
 
     return lap_indices
