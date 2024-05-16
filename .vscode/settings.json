@@ -1,6 +1,7 @@
 {
-    "files.exclude": {
-        "**/.venv": true,
-        "**/.vscode": true
-    }
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.venv": true,
+    "**/.vscode": true
+  }
 }
