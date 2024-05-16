@@ -61,13 +61,68 @@ def identify_starting_point(df: pd.DataFrame):
 
 
 def find_laps(df: pd.DataFrame):
-    minimal_df = strip_df_of_units(df[['dT', 'GPS Latitude', 'GPS Longitude']], rename_cols_with_units=False)
+    """
+    Assign lap numbers and current lap times to GPS data in a
+    DataFrame.
+
+    This function processes a DataFrame containing 'Delta Time', 'GPS
+    Latitude', and 'GPS Longitude' columns to identify laps in a race.
+    It assigns a lap number to each point and calculates the current
+    lap time based on the identified laps.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing the race data with 'Delta Time', 'GPS
+        Latitude', and 'GPS Longitude' columns.
+
+    Returns
+    -------
+    pd.DataFrame
+        The input DataFrame with added 'Lap Number' and 'Current Lap
+        Time' columns.
+
+    Notes
+    -----
+    The function uses a 0.05 km threshold to determine when the car
+    passes the start/finish line.  It ensures that the lap time is at
+    least 10 seconds long before counting a new lap to avoid false
+    positives.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from pint import UnitRegistry
+    >>> ureg = UnitRegistry()
+    >>> df = pd.DataFrame({
+    ...     'Delta Time': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ...     'GPS Latitude': [52.5200, 52.5201, 52.5202, 52.5203, 52.5204, 
+    ...                      52.5205, 52.5206, 52.5207, 52.5208, 52.5209],
+    ...     'GPS Longitude': [13.4050, 13.4051, 13.4052, 13.4053, 13.4054, 
+    ...                       13.4055, 13.4056, 13.4057, 13.4058, 13.4059]
+    ... })
+    >>> df['Delta Time'] = df['Delta Time'].pint.quantify('second')
+    >>> df = find_laps(df)
+    >>> df[['Lap Number', 'Current Lap Time']]
+       Lap Number  Current Lap Time
+    0           1               1.0
+    1           1               2.0
+    2           1               3.0
+    3           1               4.0
+    4           1               5.0
+    5           1               6.0
+    6           1               7.0
+    7           1               8.0
+    8           1               9.0
+    9           2               0.0
+    """
+    minimal_df = strip_df_of_units(df[['Delta Time', 'GPS Latitude', 'GPS Longitude']], rename_cols_with_units=False)
     # Identify the starting point (most visited point, likely to be the start/finish line)
     start_lat, start_lon = identify_starting_point(minimal_df)
-    
+
     # Threshold for considering the car has passed the start/finish line (in kilometers)
     threshold = 0.05
-    
+
     # Initialize lap counter and list to store the lap number for each point
     current_lap = 1
     current_lap_time = 0
@@ -76,16 +131,14 @@ def find_laps(df: pd.DataFrame):
 
     for index, row in minimal_df.iterrows():
         distance_from_start = great_circle((start_lat, start_lon), (row['GPS Latitude'], row['GPS Longitude'])).kilometers
-        
+
         is_new_lap = (
             distance_from_start <= threshold and    # Ensure distance from starting point is reasonable
             index > 0 and                           # Avoid counting the first point if it's close to the start
-            (
-                current_lap_time >= 10 or           # Ensure the current lap is at least 10 seconds long
-                current_lap == 1                    # Or skip this check if this is the first lap
-            )
+            (current_lap_time >= 10 or              # Ensure the current lap is at least 10 seconds long
+             current_lap == 1)                      # Or skip this check if this is the first lap
         )
-        current_lap_time += row['dT']
+        current_lap_time += row['Delta Time']
 
         if is_new_lap:  # Avoid counting the first point if it's close to the start
             current_lap += 1
