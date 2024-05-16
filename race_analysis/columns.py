@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+
+from .constants import MASS_VEHICLE
 from .units import u, Q_
 
 
@@ -36,6 +38,11 @@ def set_df_column(
     None
         This function does not return anything. It modifies the
         DataFrame and units dictionary in place.
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `name` that contains the computed `data` values.
 
     Examples
     --------
@@ -89,6 +96,12 @@ def set_delta(
     -------
     None
 
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `delta_name` that contains the computed delta
+    values.
+
     Examples
     --------
     >>> import pandas as pd
@@ -112,6 +125,68 @@ def set_delta(
     set_df_column(df, units, delta_name, data_units, data)
 
 
+def set_time_derivative(
+        df: pd.DataFrame,
+        units: dict[str, str],
+        col_to_derive: str,
+        derivative_name: str,
+    ) -> None:
+    """
+    Compute the time derivative of a column and set it in the
+    DataFrame.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame containing the data.
+    units : dict[str, str]
+        Dictionary mapping column names to their units.
+    col_to_derive : str
+        The name of the column to compute the derivative for.
+    derivative_name : str
+        The name of the column to store the derivative in.
+
+    Returns
+    -------
+    None
+        This function modifies the DataFrame in place.
+
+    Notes
+    -----
+    This function computes the time derivative of the specified
+    column using the difference between consecutive rows and the
+    time interval stored in the `'dT'` column.  The resulting
+    derivative is stored in a new column of the DataFrame with units
+    derived from the input units.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from set_time_derivative import set_time_derivative
+    >>> data = {
+    ...     'value': [1, 2, 4, 7, 11],
+    ...     'dT': [1, 1, 1, 1, 1]
+    ... }
+    >>> df = pd.DataFrame(data)
+    >>> units = {'value': 'm', 'dT': 's'}
+    >>> set_time_derivative(df, units, 'value', 'value_derivative')
+    >>> df
+       value  dT  value_derivative
+    0      1   1               0.0
+    1      2   1               1.0
+    2      4   1               2.0
+    3      7   1               3.0
+    4     11   1               4.0
+    """
+    derivative_units = u.parse_units(f'({units[col_to_derive]}) / ({units["dT"]})')
+    derivative = (df[col_to_derive].diff().fillna(0) / df['dT'].replace(0, np.nan))  # Avoid division by zero
+    set_df_column(df, units, derivative_name, derivative_units, derivative)
+    # data_units = units[col_to_delta]
+    # data = df[col_to_delta].diff().fillna(0)  # Calculate time difference between measurements
+    # set_df_column(df, units, delta_name, data_units, data)
+
+
 #########################################################
 #### SETTING MATH CHANNEL COLUMNS FROM RACE STUDIO 3 ####
 #########################################################
@@ -127,6 +202,12 @@ def set_Distance_on_GPS_Speed(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'Distance on GPS Speed'` that contains the
+    computed values.
     """
     label = 'Distance on GPS Speed'
     data_units = 'm'
@@ -146,6 +227,11 @@ def set_GPS_G_Sum(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'GPS G Sum'` that contains the computed values.
     """
     label = 'GPS G Sum'
     data_units = 'gravity'
@@ -165,6 +251,11 @@ def set_GPS_BRK_On(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'GPS BRK On'` that contains the computed values.
     """
     label = 'GPS BRK On'
     data_units = 'dimensionless'
@@ -184,6 +275,12 @@ def set_GPS_TPS_On(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'GPS TPS On'` that contains the
+    computed values.
     """
     label = 'GPS TPS On'
     data_units = 'dimensionless'
@@ -203,6 +300,11 @@ def set_GPS_CRN_On(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'GPS CRN On'` that contains the computed values.
     """
     label = 'GPS CRN On'
     data_units = 'dimensionless'
@@ -223,6 +325,11 @@ def set_GPS_CST_On(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'GPS CST On'` that contains the computed values.
     """
     label = 'GPS CST On'
     data_units = 'dimensionless'
@@ -254,8 +361,14 @@ def set_dt(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+    
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'dT'` that contains the computed time deltas.
     """
-    set_delta(df, units, 'Time', 'dT')
+    label = 'dT'
+    set_delta(df, units, 'Time', label)
 
 
 def set_acceleration(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -264,8 +377,7 @@ def set_acceleration(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     This function calculates the acceleration using the first 
     difference of the 'GPS Speed' and the time intervals ('dT') 
-    between measurements.  The acceleration is added as a new column
-    labeled 'Acceleration' in the dataframe.
+    between measurements.
 
     .. math::
         a = \frac{\Delta v}{\Delta t}
@@ -276,11 +388,114 @@ def set_acceleration(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
+    
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'Acceleration'` that contains the computed
+    acceleration values.
     """
     label = 'Acceleration'
-    data_units = 'm/(s^2)'
-    data = (df['GPS Speed'].diff().fillna(0) / df['dT'].replace(0, np.nan))  # Avoid division by zero
+    set_time_derivative(df, units, 'GPS Speed', label)
+
+
+def set_vehicle_kinetic_energy(
+        df: pd.DataFrame,
+        units: dict[str, str],
+        mass: float = MASS_VEHICLE,
+    ) -> None:
+    r"""Compute the Kinetic Energy of the vehicle
+
+    The kinetic energy of the vehicle is determined, where the default
+    mass of `MASS_VEHICLE` is used (which is derived from the average
+    mass of a person and the mass of the vehicle).
+
+    .. math::
+        KE = \frac{1}{2}mv^2
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Race Data Dataframe
+    units : dict[str, str]
+        Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'Vehicle Kinetic Energy'` that contains the
+    computed kinetic energy values.
+    """
+    label = 'Vehicle Kinetic Energy'
+    data_units = 'joules'
+    data = pd.Series(data=(0.5 * mass * df['GPS Speed']**2), dtype=f'pint[{data_units}]')
     set_df_column(df, units, label, data_units, data)
+
+
+def set_vehicle_delta_KE(df: pd.DataFrame, units: dict[str, str]) -> None:
+    """Determine the change (delta) in Vehicle Kinetic Energy.  This
+    column is titled "Delta KE".
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Race Data Dataframe
+    units : dict[str, str]
+        Units dictionary for a race data dataframe
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new 
+    column labeled `'Delta KE'` that contains the computed values.
+    """
+    label = 'Delta KE'
+    set_delta(df, units, 'Vehicle Kinetic Energy', label)
+
+
+def set_vehicle_power(df: pd.DataFrame, units: dict[str, str]) -> None:
+    r"""
+    Computes the power of the vehicle by taking the time derivative 
+    of the vehicle's kinetic energy.
+
+    The power \( P \) of the vehicle is computed as the time
+    derivative of its kinetic energy \( KE \):
+    
+    ..math::
+        P = \frac{d(KE)}{dt}
+
+    This is implemented by calculating the change in kinetic energy
+    over the change in time between consecutive data points in the
+    dataframe.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Race data dataframe containing the kinetic energy values.
+    units : dict[str, str]
+        Units dictionary for the race data dataframe.
+
+    Notes
+    -----
+    The function modifies the input dataframe `df` by adding a new
+    column labeled `'Power'` that contains the computed power values.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> data = {'Time': [0, 1, 2, 3], 'Vehicle Kinetic Energy': [0, 10, 40, 90]}
+    >>> df = pd.DataFrame(data)
+    >>> units = {'Time': 's', 'Vehicle Kinetic Energy': 'J'}
+    >>> set_vehicle_power(df, units)
+    >>> print(df)
+       Time  Vehicle Kinetic Energy  Power
+    0     0                      0    NaN
+    1     1                     10   10.0
+    2     2                     40   30.0
+    3     3                     90   50.0
+
+    """
+    label = 'Power'
+    set_time_derivative(df, units, 'Vehicle Kinetic Energy', label)
 
 #############################################
 
@@ -321,6 +536,9 @@ def initialize_custom_channels(race_data: pd.DataFrame, units: dict[str, str]) -
         Units dictionary for a race data dataframe
     """
     set_acceleration(df=race_data, units=units)
+    set_vehicle_kinetic_energy(df=race_data, units=units, mass=MASS_VEHICLE)
+    set_vehicle_delta_KE(df=race_data, units=units)
+    set_vehicle_power(df=race_data, units=units)
 
 
 def initialize_channels(race_data: pd.DataFrame, units: dict[str, str]) -> None:
