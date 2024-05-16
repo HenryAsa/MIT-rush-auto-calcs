@@ -24,18 +24,12 @@ if errorlevel 9009 (
 )
 
 if "%1" == "" goto help
-if "%1" == "html" goto clean-html
 goto clean-builder
-
-:clean-html
-rd /s /q %SOURCEDIR%\_autosummary
-rd /s /q %BUILDDIR%\%1
-rd /s /q %BUILDDIR%\doctrees
-goto end
 
 :clean-builder
 rd /s /q %SOURCEDIR%\_autosummary
 rd /s /q %BUILDDIR%\%1
+rd /s /q %BUILDDIR%\doctrees
 goto end
 
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
