@@ -10,3 +10,9 @@ scikit-learn
 geopy
 basemap
 cartopy
+
+## Generating Docs
+numpydoc
+pydata-sphinx-theme
+sphinx
+sphinx_design
