@@ -148,7 +148,7 @@ def get_folder_from_filepath(filepath: str) -> str:
     --------
     >>> get_folder_from_filepath('/home/user/file.txt')
     '/home/user'
-    
+
     >>> get_folder_from_filepath('C:\\Users\\file.txt')
     'C:\\Users'
 

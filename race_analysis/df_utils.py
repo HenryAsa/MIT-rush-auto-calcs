@@ -81,7 +81,7 @@ def get_lap_indices(
     Parameters
     ----------
     df : pd.DataFrame
-        The DataFrame containing race data, with at least a column 
+        The DataFrame containing race data, with at least a column
         named 'Lap Number'.
     start_lap : Optional[int], default=None
         The starting lap number for which to find the indices.  By
@@ -95,8 +95,8 @@ def get_lap_indices(
     Returns
     -------
     dict[int, list[int, int]]
-        A dictionary where keys are the lap numbers (start_lap and 
-        end_lap) and values are lists containing the start and end 
+        A dictionary where keys are the lap numbers (start_lap and
+        end_lap) and values are lists containing the start and end
         indices of those laps.
 
     Examples
@@ -111,7 +111,7 @@ def get_lap_indices(
 
     Notes
     -----
-    This function assumes that the DataFrame has a column named 
+    This function assumes that the DataFrame has a column named
     'Lap Number' and that the laps are sequentially indexed.  If lap
     numbers are not provided, the second lap and second-to-last lap
     are assumed to be the start/end lap respectively (typically the

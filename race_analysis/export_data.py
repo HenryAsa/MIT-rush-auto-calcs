@@ -114,7 +114,7 @@ def mat_to_csv(mat_filepath: str, csv_filepath: str) -> None:
     """
     # Load the .mat file
     mat_data = scipy.io.loadmat(mat_filepath)
-    
+
     # Iterate over each key in the dictionary
     for key, value in mat_data.items():
         # Check if the key is one of the MATLAB variables and not a metadata attribute

@@ -16,7 +16,7 @@ def set_df_column(
     Adds a new column to a DataFrame and assigns units to it.
 
     This function updates a given DataFrame by adding a new column
-    with the specified name and data. It also updates a dictionary 
+    with the specified name and data. It also updates a dictionary
     that keeps track of the units for each column in the DataFrame.
 
     Parameters
@@ -41,7 +41,7 @@ def set_df_column(
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `name` that contains the computed `data` values.
 
     Examples
@@ -69,7 +69,7 @@ def set_delta(
         delta_name: str,
     ) -> None:
     """
-    Adds a delta column to a DataFrame representing the difference 
+    Adds a delta column to a DataFrame representing the difference
     between consecutive rows of a specified column.
 
     This function computes the difference between consecutive rows of
@@ -83,8 +83,8 @@ def set_delta(
     df : pd.DataFrame
         The DataFrame to which the delta column will be added.
     units : dict of str to str
-        A dictionary mapping column names to their respective units. 
-        This dictionary will be updated with the new delta column name 
+        A dictionary mapping column names to their respective units.
+        This dictionary will be updated with the new delta column name
         and units.
     col_to_delta : str
         The name of the column for which the row differences will be
@@ -98,7 +98,7 @@ def set_delta(
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `delta_name` that contains the computed delta
     values.
 
@@ -202,7 +202,7 @@ def set_Distance_on_GPS_Speed(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'Distance on GPS Speed'` that contains the
     computed values.
     """
@@ -227,7 +227,7 @@ def set_GPS_G_Sum(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'GPS G Sum'` that contains the computed values.
     """
     label = 'GPS G Sum'
@@ -251,7 +251,7 @@ def set_GPS_BRK_On(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'GPS BRK On'` that contains the computed values.
     """
     label = 'GPS BRK On'
@@ -275,7 +275,7 @@ def set_GPS_TPS_On(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'GPS TPS On'` that contains the
     computed values.
     """
@@ -300,7 +300,7 @@ def set_GPS_CRN_On(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'GPS CRN On'` that contains the computed values.
     """
     label = 'GPS CRN On'
@@ -325,7 +325,7 @@ def set_GPS_CST_On(df: pd.DataFrame, units: dict[str, str]) -> None:
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'GPS CST On'` that contains the computed values.
     """
     label = 'GPS CST On'
@@ -358,10 +358,10 @@ def set_delta_time(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
-    
+
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'Delta Time'` that contains the computed time deltas.
     """
     label = 'Delta Time'
@@ -372,8 +372,8 @@ def set_acceleration(df: pd.DataFrame, units: dict[str, str]) -> None:
     r"""Computes the Acceleration of the vehicle based on the change
     in vehicle velocity from the 'GPS Speed' channel.
 
-    This function calculates the acceleration using the first 
-    difference of the 'GPS Speed' and the time intervals ('Delta Time') 
+    This function calculates the acceleration using the first
+    difference of the 'GPS Speed' and the time intervals ('Delta Time')
     between measurements.
 
     .. math::
@@ -385,10 +385,10 @@ def set_acceleration(df: pd.DataFrame, units: dict[str, str]) -> None:
         Race Data Dataframe
     units : dict[str, str]
         Units dictionary for a race data dataframe
-    
+
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'Acceleration'` that contains the computed
     acceleration values.
     """
@@ -419,7 +419,7 @@ def set_vehicle_kinetic_energy(
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'Vehicle Kinetic Energy'` that contains the
     computed kinetic energy values.
     """
@@ -442,7 +442,7 @@ def set_delta_vehicle_kinetic_energy(df: pd.DataFrame, units: dict[str, str]) ->
 
     Notes
     -----
-    The function modifies the input dataframe `df` by adding a new 
+    The function modifies the input dataframe `df` by adding a new
     column labeled `'Delta KE'` that contains the computed values.
     """
     label = 'Delta KE'
@@ -451,13 +451,13 @@ def set_delta_vehicle_kinetic_energy(df: pd.DataFrame, units: dict[str, str]) ->
 
 def set_vehicle_power(df: pd.DataFrame, units: dict[str, str]) -> None:
     r"""
-    Computes the power of the vehicle by taking the time derivative 
+    Computes the power of the vehicle by taking the time derivative
     of the vehicle's kinetic energy.
 
     The Power :math:`P` of the vehicle is computed as the time
     derivative of its kinetic energy :math:`KE`:
-    
-    ..math::
+
+    .. math::
         P = \frac{d(KE)}{dt}
 
     This is implemented by calculating the change in kinetic energy

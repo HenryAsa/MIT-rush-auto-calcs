@@ -37,7 +37,7 @@ def plot_data(
         x_data: pd.DataFrame | pd.Series,
         x_label: str,
         y_data: pd.DataFrame | pd.Series,
-        y_label: str
+        y_label: str,
     ) -> None:
     """
     Plot data from pandas DataFrame or Series.

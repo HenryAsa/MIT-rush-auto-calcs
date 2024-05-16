@@ -52,7 +52,7 @@ def identify_starting_point(df: pd.DataFrame):
     cluster_labels = db.labels_
     # Find the cluster that has the most points (most likely to be the start/finish line)
     largest_cluster = np.argmax(np.bincount(cluster_labels[cluster_labels >= 0]))
-    
+
     # Compute the centroid of the largest cluster
     largest_cluster_indices = np.where(cluster_labels == largest_cluster)
     largest_cluster_points = df.iloc[largest_cluster_indices]
@@ -96,9 +96,9 @@ def find_laps(df: pd.DataFrame):
     >>> ureg = UnitRegistry()
     >>> df = pd.DataFrame({
     ...     'Delta Time': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    ...     'GPS Latitude': [52.5200, 52.5201, 52.5202, 52.5203, 52.5204, 
+    ...     'GPS Latitude': [52.5200, 52.5201, 52.5202, 52.5203, 52.5204,
     ...                      52.5205, 52.5206, 52.5207, 52.5208, 52.5209],
-    ...     'GPS Longitude': [13.4050, 13.4051, 13.4052, 13.4053, 13.4054, 
+    ...     'GPS Longitude': [13.4050, 13.4051, 13.4052, 13.4053, 13.4054,
     ...                       13.4055, 13.4056, 13.4057, 13.4058, 13.4059]
     ... })
     >>> df['Delta Time'] = df['Delta Time'].pint.quantify('second')
