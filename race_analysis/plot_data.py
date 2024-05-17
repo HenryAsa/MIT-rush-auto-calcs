@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Optional
 
 from .constants import PLOTS_DIRECTORY
-from .df_utils import convert_to_magnitude
+from .df_utils import convert_series_to_magnitude
 from .utils import get_filename, get_folder_from_filepath
 
 
@@ -30,8 +30,8 @@ def plot_race_data(
     y_series : str
         Name of the column/key to use for the y-values of the plot
     """
-    x_data = convert_to_magnitude(race_data[x_series], units[x_series])
-    y_data = convert_to_magnitude(race_data[y_series], units[y_series])
+    x_data = convert_series_to_magnitude(race_data[x_series], units[x_series])
+    y_data = convert_series_to_magnitude(race_data[y_series], units[y_series])
     plot_data(x_data, f'{x_series} ({units[x_series]})', y_data, f'{y_series} ({units[y_series]})')
 
 

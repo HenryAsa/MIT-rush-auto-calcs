@@ -1,34 +1,37 @@
 import pandas as pd
 from typing import Optional
 
+from race_analysis.units import Q_
 
-def convert_to_magnitude(
-        data: pd.DataFrame | pd.Series,
-        units: str,
-    ) -> pd.DataFrame | pd.Series:
+
+def convert_series_to_magnitude(
+        data: pd.Series,
+        units: Optional[str] = None,
+    ) -> pd.Series:
     """
-    Convert the values in a DataFrame or Series to specified units.
+    Convert the values in a Series to specified units.
 
     This function uses the Pint package and Pint UnitRegistry to
-    convert the values in the given DataFrame or Series to the
-    specified units.
+    convert the values in the given Series to the specified units.
 
     Parameters
     ----------
-    data : pd.DataFrame or pd.Series
+    data : pd.Series
         The data containing values to be converted.
-    units : str
-        The target units to which the values should be converted.
+    units : str, optional
+        The target units to which the values should be converted.  If
+        no units are defined, the column will simply be converted to
+        the non-dimensional version of its current units.
 
     Returns
     -------
-    pd.DataFrame or pd.Series
+    pd.Series
         The data with values converted to the specified units.
 
     Notes
     -----
-    This function does not modify the original DataFrame or Series.
-    It returns a new DataFrame or Series with the converted values.
+    This function does not modify the original Series.  It returns a
+    new Series with the converted values.
 
     Examples
     --------
@@ -36,57 +39,89 @@ def convert_to_magnitude(
     >>> import pandas as pd
     >>> ureg = UnitRegistry()
     >>> Q_ = ureg.Quantity
-    >>> df = pd.DataFrame({
-    ...     'length': [Q_(1, 'meter'), Q_(100, 'centimeter'), Q_(1000, 'millimeter')],
-    ...     'mass': [Q_(1, 'kilogram'), Q_(1000, 'gram'), Q_(1, 'tonne')]
-    ... })
-    >>> convert_to_magnitude(df['length'], 'meter')
+    >>> data = pd.Series([Q_(1, 'meter'), Q_(100, 'centimeter'), Q_(1000, 'millimeter')])
+    >>> convert_series_to_magnitude(data, 'meter')
     0    1.0
     1    1.0
     2    1.0
-    Name: length, dtype: float64
+    dtype: float64
 
-    >>> convert_to_magnitude(df['mass'], 'kilogram')
+    >>> data = pd.Series([Q_(1, 'kilogram'), Q_(1000, 'gram'), Q_(1, 'tonne')])
+    >>> convert_series_to_magnitude(data, 'kilogram')
+    0       1.0
+    1       1.0
+    2    1000.0
+    dtype: float64
+
+    >>> data = pd.Series([Q_(1, 'second'), Q_(1, 'minute'), Q_(1, 'hour')])
+    >>> convert_series_to_magnitude(data, 'second')
+    0       1.0
+    1      60.0
+    2    3600.0
+    dtype: float64
+
+    >>> data = pd.Series([Q_(1, 'meter/second'), Q_(3.6, 'kilometer/hour')])
+    >>> convert_series_to_magnitude(data, 'meter/second')
     0    1.0
     1    1.0
-    2    1000.0
-    Name: mass, dtype: float64
+    dtype: float64
     """
-    return data.apply(lambda val: val.to(units).value)
+    if units is None:
+        return data.pint.magnitude
+
+    return data.pint.m_as(units)
 
 
-def magnitude_of_df_col(
-        column_name: str,
+def magnitude_of_df_columns(
         df: pd.DataFrame,
-        units: dict[str, str]
+        column_names: Optional[str | list[str]] = None,
+        units: Optional[dict[str, str]] = None,
     ) -> pd.DataFrame | pd.Series:
     """
-    Convert the values of a specified column in a DataFrame to specified units.
+    Convert the values of specified columns in a DataFrame to
+    specified units.
 
-    This function converts the values in a specified column of the given
-    DataFrame to the units defined in the units dictionary.  It utilizes the
-    `convert_to_magnitude` function which employs the Pint package for
-    unit conversions.
+    This function converts the values in one or more specified columns
+    of the given DataFrame to the units defined in the units
+    dictionary.  It utilizes the `convert_series_to_magnitude` function which
+    employs the Pint package for unit conversions.
 
     Parameters
     ----------
-    column_name : str
-        The name of the column in the DataFrame whose values are to be converted.
     df : pd.DataFrame
-        The DataFrame containing the column with values to be converted.
-    units : dict[str, str]
-        A dictionary where keys are column names and values are the target units
-        for conversion.
+        The DataFrame containing the columns with values to be
+        converted.
+    column_names : str | list[str], optional
+        The name or list of names of the columns in the DataFrame
+        whose values are to be converted.  If no columns are
+        specified, all of the columns in the DataFrame will be used.
+    units : dict[str, str], optional
+        A dictionary where keys are column names and values are the
+        target units for conversion.  If no units dictionary is
+        defined, the columns will simply be converted to the
+        non-dimensional version of their current units.
 
     Returns
     -------
     pd.DataFrame or pd.Series
-        The specified column with values converted to the specified units.
+        The specified columns with values converted to the specified
+        units.  If a single column name is provided, a Series is
+        returned.  If a list of column names is provided, a DataFrame
+        is returned.
+
+    Raises
+    ------
+    ValueError
+        If any of the specified columns are not present in the
+        DataFrame.
+    TypeError
+        If column_names is not a string or list of strings.
 
     Notes
     -----
-    This function does not modify the original DataFrame.  It returns a new
-    DataFrame or Series with the converted values of the specified column.
+    This function does not modify the original DataFrame. It returns
+    a new DataFrame or Series with the converted values of the
+    specified columns.
 
     Examples
     --------
@@ -99,19 +134,36 @@ def magnitude_of_df_col(
     ...     'mass': [Q_(1, 'kilogram'), Q_(1000, 'gram'), Q_(1, 'tonne')]
     ... })
     >>> units = {'length': 'meter', 'mass': 'kilogram'}
-    >>> magnitude_of_df_col('length', df, units)
+    >>> magnitude_of_df_columns('length', df, units)
     0    1.0
     1    1.0
     2    1.0
     Name: length, dtype: float64
 
-    >>> magnitude_of_df_col('mass', df, units)
-    0       1.0
-    1       1.0
-    2    1000.0
-    Name: mass, dtype: float64
+    >>> magnitude_of_df_columns(['length', 'mass'], df, units)
+       length  mass
+    0     1.0   1.0
+    1     1.0   1.0
+    2     1.0   1000.0
     """
-    return convert_to_magnitude(df[column_name], units[column_name])
+    if column_names is None:
+        column_names = df.columns
+
+    if isinstance(column_names, str):
+        conversion_units = None if units is None else units[column_names]
+        return convert_series_to_magnitude(df[column_names], conversion_units)
+
+    elif isinstance(column_names, list):
+        if not set(column_names).issubset(df.columns):
+            raise ValueError(f'The following columns are not present in the DataFrame: {set(column_names) - set(df.columns)}')
+
+        converted_df = pd.DataFrame()
+        for column in column_names:
+            conversion_units = None if units is None else units[column]
+            converted_df[column] = convert_series_to_magnitude(df[column], conversion_units)
+        return converted_df
+
+    raise TypeError(f'Column Names must be a string or a list of strings, but it was type {type(column_names)}')
 
 
 def strip_df_of_units(
@@ -121,7 +173,7 @@ def strip_df_of_units(
     """
     Strip units from a pandas DataFrame or Series object, with an
     option to rename columns/series to include original unit
-    information.
+    information.  Mainly used for data exporting.
 
     This function processes pandas objects that have Pint quantities
     (data associated with units), converting all quantities to their
@@ -203,7 +255,8 @@ def slice_into_df(
     df : pd.DataFrame
         The DataFrame from which to slice.
     start_index : Optional[int], default=None
-        The index of the first row in the slice.  Defaults to 0 if None.
+        The index of the first row in the slice.  Defaults to 0 if
+        None.
     end_index : Optional[int], default=None
         The index of the last row in the slice.  Defaults to one less
         than the DataFrame's last index if None or if the provided
@@ -254,9 +307,10 @@ def columns_during_state(
         df: pd.DataFrame,
         data_columns: str | list[str],
         state_columns: str | list[str],
+        append_to_column_name: str = "",
         fill_with_zeros: bool = False,
         all_states_must_be_on: bool = True,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | pd.Series:
     """
     Filter data columns based on state columns' conditions.
 
@@ -269,15 +323,19 @@ def columns_during_state(
     Parameters
     ----------
     df : pd.DataFrame
-        The input DataFrame containing the data and state columns.
-    data_columns : str or list of str
+        The input pint dimensionalized DataFrame containing data
+        and state columns.
+    data_columns : str | list[str]
         The column(s) to be filtered based on the state columns.
-    state_columns : str or list of str
+    state_columns : str | list[str]
         The column(s) that define the state conditions, containing
         only 0 and 1 values.
+    append_to_column_name : str
+        Appends the given string to all of the column names in the
+        output DataFrame.
     fill_with_zeros : bool, optional
         If True, non-matching rows in data columns are filled with
-        zerosOtherwise, they are filled with NaNDefault is False.
+        zerosOtherwise, they are filled with NaN.  Default is False.
     all_states_must_be_on : bool, optional
         If True, rows where all state columns are 1 are selected.
         If False, rows where any state column is 1 are selected.
@@ -285,8 +343,11 @@ def columns_during_state(
 
     Returns
     -------
-    pd.DataFrame
-        A DataFrame containing the filtered data columns.
+    pd.DataFrame | pd.Series
+        DataFrame containing data columns filtered by the state
+        conditions.  If the DataFrame only contains a single column,
+        the Series object is returned instead.  See Notes section for
+        more details.
 
     Raises
     ------
@@ -295,36 +356,59 @@ def columns_during_state(
         DataFrame, or if the state columns contain values other than
         0 and 1.
 
+    Notes
+    -----
+    If only a single column is specified as the desired `data_column`,
+    then this function will return a pd.Series object instead of a
+    pd.DataFrame object.  If multiple data columns are requested, the
+    output type will be a pd.DataFrame object.
+
     Examples
     --------
     >>> import pandas as pd
-    >>> data = {
-    ...     'A': [1, 2, 3, 4],
-    ...     'B': [5, 6, 7, 8],
-    ...     'State1': [1, 0, 1, 1],
-    ...     'State2': [1, 1, 0, 1]
-    ... }
-    >>> df = pd.DataFrame(data)
-    >>> columns_during_state(df, ['A', 'B'], ['State1', 'State2'])
-       A    B
-    0  1  5.0
-    1  NaN NaN
-    2  NaN NaN
-    3  4.0  8.0
+    >>> from pint import Quantity as Q_
+    >>> df = pd.DataFrame({
+    ...     'data1': pd.Series([1, 2, 3, 4], dtype='pint[meter]'),
+    ...     'data2': pd.Series([5, 6, 7, 8], dtype='pint[sec]'),
+    ...     'state1': pd.Series([1, 0, 1, 1], dtype='pint[dimensionless]'),
+    ...     'state2': pd.Series([1, 1, 0, 1], dtype='pint[dimensionless]'),
+    ... })
 
-    >>> columns_during_state(df, 'A', 'State1', fill_with_zeros=True)
-       A
-    0  1
-    1  0
-    2  3
-    3  4
+    When `fill_with_zeros` is False and `all_states_must_be_on` is True:
+    >>> columns_during_state(df, ['data1', 'data2'], ['state1', 'state2'])
+       data1  data2
+    0      1      5
+    1    nan    nan
+    2    nan    nan
+    3      4      8
+    dtype: pint[meter], pint[sec]
 
-    >>> columns_during_state(df, ['A', 'B'], 'State2', all_states_must_be_on=False)
-       A    B
-    0  1  5
-    1  NaN NaN
-    2  3  7
-    3  4  8
+    When `fill_with_zeros` is False and `all_states_must_be_on` is False:
+    >>> columns_during_state(df, ['data1', 'data2'], ['state1', 'state2'], all_states_must_be_on=False)
+       data1  data2
+    0      1      5
+    1      2      6
+    2      3      7
+    3      4      8
+    dtype: pint[meter], pint[sec]
+
+    When `fill_with_zeros` is True and `all_states_must_be_on` is True:
+    >>> columns_during_state(df, 'data1', 'state1', fill_with_zeros=True)
+       data1
+    0      1
+    1      0
+    2      3
+    3      4
+    dtype: pint[meter]
+
+    When `fill_with_zeros` is True and `all_states_must_be_on` is False:
+    >>> columns_during_state(df, 'data1', 'state1', fill_with_zeros=True, all_states_must_be_on=False)
+       data1
+    0      1
+    1      0
+    2      3
+    3      4
+    dtype: pint[meter]
     """
     data_columns = [data_columns] if isinstance(data_columns, str) else data_columns
     state_columns = [state_columns] if isinstance(state_columns, str) else state_columns
@@ -338,16 +422,24 @@ def columns_during_state(
         if not df[state_column].isin([0, 1]).all():
             raise ValueError(f'State column "{state_column}" must only contain 0 and 1 values.')
 
+    state_df = magnitude_of_df_columns(df[state_columns], state_columns)
 
     if all_states_must_be_on:
-        is_on = df[state_columns].all(axis=1)
+        is_on = state_df.all(axis=1)
     else:
-        is_on = df[state_columns].any(axis=1)
+        is_on = state_df.any(axis=1)
 
     if fill_with_zeros:
-        default_value = 0
-        new_df = df[data_columns].where(is_on, other=default_value)
+        new_df = pd.DataFrame()
+        for column in data_columns:
+            default_value = Q_(0, df[column].pint.units)
+            new_df[column] = df[column].where(is_on, other=default_value)
     else:
         new_df = df[data_columns].where(is_on)
+
+    new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name}' for column_name in new_df.columns]
+
+    if len(new_df.columns) == 1:
+        return new_df[new_df.columns[0]]
 
     return new_df
