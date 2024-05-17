@@ -5,3 +5,5 @@ COL_LATITUDE = 'GPS Latitude'
 COL_LONGITUDE = 'GPS Longitude'
 """'GPS Longitude' column name"""
 
+COL_TIME = 'Time'
+"""'Time' column name"""

@@ -267,3 +267,43 @@ def find_laps(df: pd.DataFrame) -> pd.DataFrame:
     df['Current Lap Time'] = pd.Series(data=lap_times, name='Lap Time', dtype='pint[second]')
 
     return df
+
+
+def reset_lap_times(lap_time_series: pd.Series) -> np.ndarray:
+    """
+    Resets the lap times to start from zero and span the total
+    duration.
+
+    This function takes a pandas Series of lap times and returns a
+    numpy array of lap times reset to start from zero, evenly
+    distributed over the total duration.
+
+    Parameters
+    ----------
+    lap_time_series : pd.Series
+        A pandas Series containing the lap times.
+
+    Returns
+    -------
+    np.ndarray
+        A numpy array with the reset lap times starting from zero.
+
+    Notes
+    -----
+    The function uses `np.linspace` to generate evenly spaced lap
+    times starting from zero up to the total duration covered by the
+    input lap times.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> lap_times = pd.Series([10, 20, 30, 40, 50])
+    >>> reset_lap_times(lap_times)
+    array([ 0., 10., 20., 30., 40.])
+
+    >>> lap_times = pd.Series([5, 15, 25])
+    >>> reset_lap_times(lap_times)
+    array([ 0., 10., 20.])
+    """
+    return np.linspace(0, lap_time_series.iloc[-1] - lap_time_series.iloc[0], len(lap_time_series))
