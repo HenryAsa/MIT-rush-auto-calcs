@@ -11,7 +11,7 @@ def get_lap_indices(
         df: pd.DataFrame,
         start_lap: Optional[int] = None,
         end_lap: Optional[int] = None,
-    ) -> dict[int: list[int, int]]:
+    ) -> dict[int: tuple[int, int]]:
     """
     Retrieve the start and end indices for given laps.
 
@@ -34,9 +34,9 @@ def get_lap_indices(
 
     Returns
     -------
-    dict[int, list[int, int]]
+    dict[int, tuple[int, int]]
         A dictionary where keys are the lap numbers (start_lap and
-        end_lap) and values are lists containing the start and end
+        end_lap) and values are tuples containing the start and end
         indices of those laps.
 
     Notes
@@ -55,7 +55,7 @@ def get_lap_indices(
     ... }
     >>> df = pd.DataFrame(data)
     >>> get_lap_indices(df, 1, 2)
-    {1: [0, 1], 2: [2, 3]}
+    {1: (0, 1), 2: (2, 3)}
 
     >>> data = {
     ...     'Lap Number': [1, 1, 2, 2, 3, 3, 4, 4],
@@ -63,7 +63,7 @@ def get_lap_indices(
     ... }
     >>> df = pd.DataFrame(data)
     >>> get_lap_indices(df, 2, 3)
-    {2: [2, 3], 3: [4, 5]}
+    {2: (2, 3), 3: (4, 5)}
 
     >>> data = {
     ...     'Lap Number': [1, 1, 2, 2, 3, 3, 4, 4],
@@ -71,7 +71,7 @@ def get_lap_indices(
     ... }
     >>> df = pd.DataFrame(data)
     >>> get_lap_indices(df)
-    {2: [2, 3], 3: [4, 5]}
+    {2: (2, 3), 3: (4, 5)}
     """
     lap_num_column = 'Lap Number'
     lap_indices: dict[int, list[int, int]] = {}
@@ -84,12 +84,45 @@ def get_lap_indices(
     for lap_number in range(start_lap, end_lap + 1):
         lap_start_index = df.loc[df[lap_num_column] == lap_number].index[0]
         lap_end_index = df.loc[df[lap_num_column] == lap_number].index[-1]
-        lap_indices[lap_number] = [lap_start_index, lap_end_index]
+        lap_indices[lap_number] = (lap_start_index, lap_end_index)
 
     return lap_indices
 
 
-def identify_starting_point(df: pd.DataFrame):
+def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
+    """
+    Calculate the start and end lap numbers for a race.
+
+    This function takes a DataFrame containing lap information and
+    returns a tuple with the start lap number and the end lap number.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing lap information. It should have a column
+        named 'Lap Number'.
+
+    Returns
+    -------
+    tuple of int
+        A tuple containing:
+        - start_lap_num: The start lap number (fixed as 2).
+        - end_lap_num: The end lap number, derived from the last lap
+          number in the DataFrame minus one.
+
+    Notes
+    -----
+    The function assumes that the 'Lap Number' column exists and
+    contains numeric values. The end lap number is calculated by
+    subtracting 1 from the last value in the 'Lap Number' column.
+    """
+    start_lap_num = 2
+    end_lap_num = (df['Lap Number'].iloc[-1] - 1).magnitude
+
+    return start_lap_num, end_lap_num
+
+
+def identify_starting_point(df: pd.DataFrame) -> tuple:
     """
     Identify the centroid of the most populated cluster in geographic
     data.
@@ -143,7 +176,7 @@ def identify_starting_point(df: pd.DataFrame):
     return centroid
 
 
-def find_laps(df: pd.DataFrame):
+def find_laps(df: pd.DataFrame) -> pd.DataFrame:
     """
     Assign lap numbers and current lap times to GPS data in a
     DataFrame.

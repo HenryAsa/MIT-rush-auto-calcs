@@ -60,7 +60,10 @@ intersphinx_mapping = {
     'pytest': ('https://docs.pytest.org/en/stable', None),
     'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
     'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
-    'dlpack': ('https://dmlc.github.io/dlpack/latest', None)
+    'dlpack': ('https://dmlc.github.io/dlpack/latest', None),
+    'pint': ('https://pint.readthedocs.io/en/stable', None),
+    'cartopy': ('https://scitools.org.uk/cartopy/docs/latest', None),
+    # 'pint_pandas': ('https://pint.readthedocs.io/en/0.18/pint-pandas.html', None),
 }
 
 # -----------------------------------------------------------------------------
