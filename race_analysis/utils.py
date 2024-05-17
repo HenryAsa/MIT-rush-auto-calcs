@@ -24,7 +24,7 @@ def get_files_with_extension(directory: str, extension: str) -> list[str]:
     directory : str
         The path of the directory to search in.
     extension : str
-        The file extension to look for. It should start with a dot
+        The file extension to look for.  It should start with a dot
         (e.g., '.txt').
 
     Returns

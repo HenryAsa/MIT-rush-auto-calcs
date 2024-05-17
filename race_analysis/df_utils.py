@@ -64,7 +64,7 @@ def magnitude_of_df_col(
     Convert the values of a specified column in a DataFrame to specified units.
 
     This function converts the values in a specified column of the given
-    DataFrame to the units defined in the units dictionary. It utilizes the
+    DataFrame to the units defined in the units dictionary.  It utilizes the
     `convert_to_magnitude` function which employs the Pint package for
     unit conversions.
 
@@ -85,7 +85,7 @@ def magnitude_of_df_col(
 
     Notes
     -----
-    This function does not modify the original DataFrame. It returns a new
+    This function does not modify the original DataFrame.  It returns a new
     DataFrame or Series with the converted values of the specified column.
 
     Examples
@@ -127,7 +127,7 @@ def strip_df_of_units(
     (data associated with units), converting all quantities to their
     base units.  Optionally, it appends the original unit information
     to the names of each column in a DataFrame or the name of a
-    Series. The renaming can be controlled by the
+    Series.  The renaming can be controlled by the
     `rename_cols_with_units` parameter.
 
     Parameters
@@ -194,7 +194,7 @@ def slice_into_df(
     Extract a slice from a DataFrame between specified indices.
 
     This function extracts a slice from a DataFrame, starting from
-    `start_index` to `end_index`. If `start_index` or `end_index` is
+    `start_index` to `end_index`.  If `start_index` or `end_index` is
     not provided, default values are used (0 for `start_index` and one
     less than the last index of the DataFrame for `end_index`).
 
@@ -203,9 +203,9 @@ def slice_into_df(
     df : pd.DataFrame
         The DataFrame from which to slice.
     start_index : Optional[int], default=None
-        The index of the first row in the slice. Defaults to 0 if None.
+        The index of the first row in the slice.  Defaults to 0 if None.
     end_index : Optional[int], default=None
-        The index of the last row in the slice. Defaults to one less
+        The index of the last row in the slice.  Defaults to one less
         than the DataFrame's last index if None or if the provided
         index is out of bounds.
 
@@ -248,3 +248,106 @@ def slice_into_df(
         end_index = len(df) - 2
 
     return df.iloc[start_index:end_index + 1]
+
+
+def columns_during_state(
+        df: pd.DataFrame,
+        data_columns: str | list[str],
+        state_columns: str | list[str],
+        fill_with_zeros: bool = False,
+        all_states_must_be_on: bool = True,
+    ) -> pd.DataFrame:
+    """
+    Filter data columns based on state columns' conditions.
+
+    This function filters the specified data columns in a DataFrame
+    based on the conditions defined by state columns.  It allows
+    customization to fill non-matching rows with zeros or leave them
+    as NaN, and to specify whether all state columns must be on or if
+    any can be on.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The input DataFrame containing the data and state columns.
+    data_columns : str or list of str
+        The column(s) to be filtered based on the state columns.
+    state_columns : str or list of str
+        The column(s) that define the state conditions, containing
+        only 0 and 1 values.
+    fill_with_zeros : bool, optional
+        If True, non-matching rows in data columns are filled with
+        zerosOtherwise, they are filled with NaNDefault is False.
+    all_states_must_be_on : bool, optional
+        If True, rows where all state columns are 1 are selected.
+        If False, rows where any state column is 1 are selected.
+        Default is True.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the filtered data columns.
+
+    Raises
+    ------
+    ValueError
+        If any of the data or state columns are not present in the
+        DataFrame, or if the state columns contain values other than
+        0 and 1.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> data = {
+    ...     'A': [1, 2, 3, 4],
+    ...     'B': [5, 6, 7, 8],
+    ...     'State1': [1, 0, 1, 1],
+    ...     'State2': [1, 1, 0, 1]
+    ... }
+    >>> df = pd.DataFrame(data)
+    >>> columns_during_state(df, ['A', 'B'], ['State1', 'State2'])
+       A    B
+    0  1  5.0
+    1  NaN NaN
+    2  NaN NaN
+    3  4.0  8.0
+
+    >>> columns_during_state(df, 'A', 'State1', fill_with_zeros=True)
+       A
+    0  1
+    1  0
+    2  3
+    3  4
+
+    >>> columns_during_state(df, ['A', 'B'], 'State2', all_states_must_be_on=False)
+       A    B
+    0  1  5
+    1  NaN NaN
+    2  3  7
+    3  4  8
+    """
+    data_columns = [data_columns] if isinstance(data_columns, str) else data_columns
+    state_columns = [state_columns] if isinstance(state_columns, str) else state_columns
+
+    if not set(data_columns).issubset(df.columns):
+        raise ValueError(f'The following data columns are not present in the DataFrame: {set(data_columns) - set(df.columns)}')
+    if not set(state_columns).issubset(df.columns):
+        raise ValueError(f'The following state columns are not present in the DataFrame: {set(state_columns) - set(df.columns)}')
+
+    for state_column in state_columns:
+        if not df[state_column].isin([0, 1]).all():
+            raise ValueError(f'State column "{state_column}" must only contain 0 and 1 values.')
+
+
+    if all_states_must_be_on:
+        is_on = df[state_columns].all(axis=1)
+    else:
+        is_on = df[state_columns].any(axis=1)
+
+    if fill_with_zeros:
+        default_value = 0
+        new_df = df[data_columns].where(is_on, other=default_value)
+    else:
+        new_df = df[data_columns].where(is_on)
+
+    return new_df

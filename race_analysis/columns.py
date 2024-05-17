@@ -16,7 +16,7 @@ def set_df_column(
     Adds a new column to a DataFrame and assigns units to it.
 
     This function updates a given DataFrame by adding a new column
-    with the specified name and data. It also updates a dictionary
+    with the specified name and data.  It also updates a dictionary
     that keeps track of the units for each column in the DataFrame.
 
     Parameters
@@ -30,13 +30,13 @@ def set_df_column(
     column_units : str
         The units for the new column.
     data : pd.DataFrame or pd.Series
-        The data to be added as the new column. It can be a DataFrame
+        The data to be added as the new column.  It can be a DataFrame
         or Series.
 
     Returns
     -------
     None
-        This function does not return anything. It modifies the
+        This function does not return anything.  It modifies the
         DataFrame and units dictionary in place.
 
     Notes
@@ -74,7 +74,7 @@ def set_delta(
 
     This function computes the difference between consecutive rows of
     the specified column in the DataFrame and adds a new column with
-    these delta values. The units dictionary is updated to include the
+    these delta values.  The units dictionary is updated to include the
     units for the new delta column, which are assumed to be the same
     as those for the original column.
 
@@ -288,7 +288,7 @@ def set_GPS_TPS_On(df: pd.DataFrame, units: dict[str, str]) -> None:
 def set_GPS_CRN_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     """Set "GPS CRN On" Math Channel
 
-    Computes when the lateral acceleration is greater than 0.2g. The
+    Computes when the lateral acceleration is greater than 0.2g.  The
     outputs are: 0 = On a straight, 1 = In a corner.
 
     Parameters
@@ -313,7 +313,7 @@ def set_GPS_CST_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     """Set "GPS CST On" Math Channel
 
     Computes when the driver is not on the brakes, and not on the
-    throttle, and not in a corner. The outputs are: 0 = Not coasting,
+    throttle, and not in a corner.  The outputs are: 0 = Not coasting,
     1 = Coasting.
 
     Parameters

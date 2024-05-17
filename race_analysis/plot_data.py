@@ -45,18 +45,18 @@ def plot_data(
     Plot data from pandas DataFrame or Series.
 
     This function takes x and y data in the form of pandas DataFrame
-    or Series, and labels for the x and y axes. It then plots the data
+    or Series, and labels for the x and y axes.  It then plots the data
     using matplotlib's plt.plot function and labels the axes
     accordingly.
 
     Parameters
     ----------
     x_data : pd.DataFrame | pd.Series
-        Data for the x-axis. Must be a pandas DataFrame or Series.
+        Data for the x-axis.  Must be a pandas DataFrame or Series.
     x_label : str
         Label for the x-axis.
     y_data : pd.DataFrame | pd.Series
-        Data for the y-axis. Must be a pandas DataFrame or Series.
+        Data for the y-axis.  Must be a pandas DataFrame or Series.
     y_label : str
         Label for the y-axis.
 
@@ -90,10 +90,10 @@ def save_plot(
     data_file : str
         The path to the data file used to determine the save location.
     name : str, optional
-        The name of the file to save the plot as. If not provided, the
+        The name of the file to save the plot as.  If not provided, the
         plot title is used.
     lap_num : float, optional
-        The lap number to include in the directory path. If not
+        The lap number to include in the directory path.  If not
         provided, no lap folder is created.
 
     Returns

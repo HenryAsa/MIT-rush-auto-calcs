@@ -29,7 +29,7 @@ def export_data_to_csv(
         exported CSV.
     data_dfs : pd.DataFrame | Iterable[pd.Series]
         An iterable of pandas Series objects representing the data to
-        be exported alongside the time series. Each series must have
+        be exported alongside the time series.  Each series must have
         Pint quantities.
     filename : str
         The name of the file to which the combined data will be
@@ -135,9 +135,9 @@ def mats_to_csv(mat_files: Iterable[str], csv_filepath: str) -> None:
     .csv file.
 
     Each variable from the .mat files is loaded and stored in a single
-    DataFrame. Variables are renamed to ensure uniqueness across
+    DataFrame.  Variables are renamed to ensure uniqueness across
     multiple files, typically by appending an index or file identifier
-    to the original variable name. The consolidated DataFrame is then
+    to the original variable name.  The consolidated DataFrame is then
     saved to a single .csv file.
 
     Parameters

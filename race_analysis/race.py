@@ -11,7 +11,7 @@ def generate_units_dict(csv_filepath: str, units: dict[str, str]) -> dict[str, s
     This function reads the first row of a CSV file specified by the
     file path.  It then generates and returns a dictionary where each
     key-value pair corresponds to a column label and its associated
-    unit. If a unit is not specified (empty or consisting only of
+    unit.  If a unit is not specified (empty or consisting only of
     spaces) for a label, it is replaced with 'dimensionless'.
     Additionally, any spaces are removed from the units, and
     percentage symbols are replaced with the word 'percent'.
