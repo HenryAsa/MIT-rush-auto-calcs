@@ -4,7 +4,9 @@ import pandas as pd
 from typing import Optional
 
 from .constants import PLOTS_DIRECTORY
-from .utils import convert_to_magnitude, get_filename, get_folder_from_filepath
+from .df_utils import convert_to_magnitude
+from .utils import get_filename, get_folder_from_filepath
+
 
 def plot_race_data(
         race_data: pd.DataFrame,
@@ -68,7 +70,6 @@ def plot_data(
     plt.plot(x_data, y_data)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    # plt.show()
 
 
 def save_plot(
