@@ -159,7 +159,7 @@ def magnitude_of_df_columns(
 
     if isinstance(column_names, str):
         conversion_units = None if units is None else units[column_names]
-        return convert_series_to_magnitude(df[column_names], conversion_units)
+        return copy_attrs_to_new_df(original_df=df, new_df=convert_series_to_magnitude(df[column_names], conversion_units))
 
     elif isinstance(column_names, list):
         if not set(column_names).issubset(df.columns):
@@ -169,7 +169,7 @@ def magnitude_of_df_columns(
         for column in column_names:
             conversion_units = None if units is None else units[column]
             converted_df[column] = convert_series_to_magnitude(df[column], conversion_units)
-        return converted_df
+        return copy_attrs_to_new_df(original_df=df, new_df=converted_df)
 
     raise TypeError(f'Column Names must be a string or a list of strings, but it was type {type(column_names)}')
 
@@ -232,7 +232,7 @@ def strip_df_of_units(
 
         new_df: pd.DataFrame = data_df.copy().pint.dequantify()
         new_df.columns = [col[0] for col in new_df.columns.values]
-        return new_df
+        return copy_attrs_to_new_df(original_df=data_df, new_df=new_df)
 
     if isinstance(data_df, pd.Series):
         if rename_cols_with_units is True:
@@ -240,7 +240,7 @@ def strip_df_of_units(
         else:
             name = data_df.name
 
-        return pd.Series(name=name, data=data_df.copy().pint.to_base_units().pint.magnitude)
+        return copy_attrs_to_new_df(original_df=data_df, new_df=pd.Series(name=name, data=data_df.copy().pint.to_base_units().pint.magnitude))
 
     raise incorrect_type_error
 
@@ -308,7 +308,7 @@ def slice_into_df(
     if end_index is None or end_index > len(df) - 2:
         end_index = len(df) - 2
 
-    return df.iloc[start_index:end_index + 1]
+    return copy_attrs_to_new_df(original_df=df, new_df=df.iloc[start_index:end_index + 1])
 
 
 def columns_during_state(
@@ -448,6 +448,61 @@ def columns_during_state(
     new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name.casefold()}' for column_name in new_df.columns]
 
     if len(new_df.columns) == 1:
-        return new_df[new_df.columns[0]]
+        return copy_attrs_to_new_df(original_df=df, new_df=new_df[new_df.columns[0]])
 
+    return copy_attrs_to_new_df(original_df=df, new_df=new_df)
+
+
+def copy_attrs_to_new_df(
+        original_df: pd.DataFrame | pd.Series,
+        new_df: pd.DataFrame | pd.Series,
+    ) -> pd.DataFrame | pd.Series:
+    """
+    Copy attributes from the original DataFrame or Series to a new
+    DataFrame or Series.
+
+    This function takes an original DataFrame or Series and a new
+    DataFrame or Series, and copies the attributes from the original
+    to the new one.  It returns the new DataFrame or Series with the
+    copied attributes.
+
+    Parameters
+    ----------
+    original_df : pd.DataFrame or pd.Series
+        The DataFrame or Series from which attributes will be copied.
+    new_df : pd.DataFrame or pd.Series
+        The DataFrame or Series to which attributes will be copied.
+
+    Returns
+    -------
+    pd.DataFrame or pd.Series
+        The new DataFrame or Series with copied attributes.
+
+    See Also
+    --------
+    pd.DataFrame.attrs : Access DataFrame attributes.
+    pd.Series.attrs : Access Series attributes.
+
+    Examples
+    --------
+    Copying attributes from one DataFrame to another:
+
+    >>> import pandas as pd
+    >>> df1 = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    >>> df1.attrs = {'author': 'user'}
+    >>> df2 = pd.DataFrame({'A': [5, 6], 'B': [7, 8]})
+    >>> df2 = copy_attrs_to_new_df(df1, df2)
+    >>> df2.attrs
+    {'author': 'user'}
+
+    Copying attributes from one Series to another:
+
+    >>> s1 = pd.Series([1, 2, 3])
+    >>> s1.attrs = {'description': 'sample series'}
+    >>> s2 = pd.Series([4, 5, 6])
+    >>> s2 = copy_attrs_to_new_df(s1, s2)
+    >>> s2.attrs
+    {'description': 'sample series'}
+    """
+    new_df.attrs = original_df.attrs
     return new_df

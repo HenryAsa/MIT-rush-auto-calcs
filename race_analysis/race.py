@@ -10,6 +10,7 @@ import pandas as pd
 from .column_names import COL_LAP_NUM
 from .columns import initialize_channels
 from .laps_data import find_laps
+from .utils import get_filename
 
 
 def generate_units_dict(
@@ -92,6 +93,21 @@ def load_race(
         CSV file.  This DataFrame is compatible with Pint for
         unit-aware calculations.
 
+    See Also
+    --------
+    generate_units_dict : Function to generate and clean the units
+                          dictionary from the CSV file.
+    initialize_channels : Function to initialize channels in the
+                          DataFrame.
+    find_laps : Function to find and compute lap numbers in the
+                DataFrame.
+
+    Notes
+    -----
+    The function sets the `attrs` attribute of the returned DataFrame
+    with metadata containing the file path and file name of the
+    loaded CSV file. This can be useful for tracking the data source.
+
     Examples
     --------
     >>> RACE_DATA_DF = load_race('race_data.csv')
@@ -112,5 +128,10 @@ def load_race(
     if COL_LAP_NUM not in race_data_df.columns:
         find_laps(race_data_df)
         raise NameError('"Lap Number" column is not included in the DataFrame, so it was computed (but this computation might be wrong).')
+
+    race_data_df.attrs = {
+        "data_filepath": race_data_filepath,
+        "data_filename": get_filename(race_data_filepath),
+    }
 
     return race_data_df
