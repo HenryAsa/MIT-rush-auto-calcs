@@ -451,6 +451,9 @@ def find_laps(df: pd.DataFrame) -> pd.DataFrame:
     8           1               9.0
     9           2               0.0
     """
+    if 'Lap Number' in df.columns:
+        raise NameError('This DataFrame already contains a "Lap Number" column.')
+
     minimal_df = strip_df_of_units(df[['Delta Time', COL_LATITUDE, COL_LONGITUDE]], rename_cols_with_units=False)
     start_lat, start_lon = identify_starting_point(minimal_df)
 

@@ -8,6 +8,7 @@ import pint
 from race_analysis.column_names import COL_LATITUDE, COL_LONGITUDE
 from race_analysis.df_utils import slice_into_df
 from race_analysis.laps_data import get_lap_indices, get_start_end_laps
+from race_analysis.plot_data import save_plot
 
 
 def plot_map_every_lap(
@@ -15,6 +16,7 @@ def plot_map_every_lap(
         data_to_plot: pd.Series,
         data_units: str | pint.Unit,
         colorbar_label: str,
+        data_filepath: str,
     ) -> None:
     """
     Plots vehicle data on an OSM map for each lap.
@@ -79,4 +81,5 @@ def plot_map_every_lap(
 
         plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
         plt.title(f'Vehicle {data_name} on OSM Map - Lap {lap_num}')
+        save_plot(data_filepath, lap_num=lap_num)
         plt.show()

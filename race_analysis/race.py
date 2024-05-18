@@ -1,5 +1,6 @@
 import pandas as pd
 
+from .column_names import COL_LAP_NUM
 from .columns import initialize_channels
 from .laps_data import find_laps
 
@@ -91,9 +92,12 @@ def load_race(race_data_filepath: str, units: dict[str, str]) -> pd.DataFrame:
 
     generate_units_dict(csv_filepath=race_data_filepath, units=units)
 
-    race_data_df = race_data.pint.quantify(level=-1)
+    race_data_df: pd.DataFrame = race_data.pint.quantify(level=-1)
 
     initialize_channels(race_data=race_data_df, units=units)
-    find_laps(race_data_df)
+
+    if COL_LAP_NUM not in race_data_df.columns:
+        find_laps(race_data_df)
+        raise NameError('"Lap Number" column is not included in the DataFrame, so it was computed (but this computation might be wrong).')
 
     return race_data_df
