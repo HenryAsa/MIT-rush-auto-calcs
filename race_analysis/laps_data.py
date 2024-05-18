@@ -262,12 +262,12 @@ def add_lap_numbers_to_csv(
     )
     cumulative_lap_times = [sum(lap_times[:lap_num+1]) for lap_num in range(len(lap_times))]
 
-    race_data['Lap Number'] = len(cumulative_lap_times) - 1
+    race_data[('Lap Number', 'dimensionless')] = len(cumulative_lap_times) - 1
 
     for current_lap in reversed(range(1, len(cumulative_lap_times))):
         race_data.loc[race_data[('Time', 's')] < cumulative_lap_times[current_lap], 'Lap Number'] = current_lap
 
-    race_data.to_csv(csv_to_modify if new_csv_filename is None else new_csv_filename)
+    race_data.to_csv(csv_to_modify if new_csv_filename is None else new_csv_filename, index=False)
 
 
 def set_lap_num_in_data_csv() -> None:
