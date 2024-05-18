@@ -203,7 +203,7 @@ def get_lap_times_from_json(
     if data_filename not in all_lap_times:
         raise NameError(f'"{data_filename}" was not in the lap_times.json file')
 
-    return convert_time_list_to_seconds(all_lap_times[data_filename])
+    return convert_time_list_to_seconds(all_lap_times[data_filename]["lap_times"])
 
 
 def add_lap_numbers_to_csv(

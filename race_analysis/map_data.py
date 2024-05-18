@@ -14,7 +14,7 @@ import pint
 from race_analysis.column_names import COL_LATITUDE, COL_LONGITUDE
 from race_analysis.df_utils import slice_into_df
 from race_analysis.laps_data import get_lap_indices, get_start_end_laps
-from race_analysis.plot_data import save_plot
+from race_analysis.plot_data import save_plot, save_or_show_plot
 
 
 class GoogleCustomTiles(cimgt.GoogleTiles):
@@ -232,6 +232,8 @@ def plot_map(
     >>> plot_map(df, data_to_plot, 'meters/second', 0,
     ...          'Speed (m/s)', 'path/to/save/plot.png')
     """
+    save_or_show_plot(save_plots=save_plots, show_plots=show_plots)
+
     data_name = data_to_plot.name
     lap_indices = get_lap_indices(df)
     start_lap_index, end_lap_index = lap_indices[lap_num]
@@ -258,7 +260,8 @@ def plot_map(
         ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
         # Add the tile layer
-        ax.add_image(tile_source, 18)  # The second argument is the zoom level
+        zoom_level = 18
+        ax.add_image(tile_source, zoom_level)
 
         for _, row in new_df.iterrows():
             color = cmap(norm(row[data_name]))
@@ -266,11 +269,14 @@ def plot_map(
 
         plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
         plt.title(f'Vehicle {data_name} on {map.name} - Lap {lap_num}')
+        plt.tight_layout()
 
         if save_plots:
             save_plot(data_filepath, name=f'{map.name} {ax.get_title()}', lap_num=lap_num)
         if show_plots:
             plt.show()
+
+        plt.close()
 
 
 def plot_map_every_lap(
@@ -350,6 +356,8 @@ def plot_map_every_lap(
     >>> plot_map_every_lap(df, data_to_plot, 'meters/second',
     ...                    'Speed (m/s)', 'path/to/save/plot.png', 0, 2)
     """
+    save_or_show_plot(save_plots=save_plots, show_plots=show_plots)
+
     default_start_lap_num, default_end_lap_num = get_start_end_laps(df)
 
     if start_lap_num is None:

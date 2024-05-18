@@ -77,6 +77,7 @@ def plot_data(
     plt.plot(x_data, y_data)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
+    plt.tight_layout()
 
 
 def save_plot(
@@ -128,3 +129,61 @@ def save_plot(
     os.makedirs(get_folder_from_filepath(filepath), exist_ok=True)
 
     plt.savefig(filepath)
+
+
+def save_or_show_plot(
+        save_plots: bool,
+        show_plots: bool,
+    ) -> None:
+    """
+    Ensure that either saving or showing plots is enabled.
+
+    This function checks that at least one of the `save_plots` or
+    `show_plots` options is set to True.  If both are False, it
+    raises a ValueError to prevent unnecessary computation.
+
+    Parameters
+    ----------
+    save_plots : bool
+        If True, plots will be saved to files.
+    show_plots : bool
+        If True, plots will be displayed.
+
+    Raises
+    ------
+    ValueError
+        If both `save_plots` and `show_plots` are False, indicating
+        that no operation will be performed.
+
+    Notes
+    -----
+    This function helps prevent wasting computational resources.  If
+    neither saving nor showing plots is required, running the
+    computation is redundant/pointless.  By ensuring at least one
+    option is enabled, this function helps maintain efficient use of
+    resources.
+
+    Examples
+    --------
+    Ensure at least one of the options is enabled:
+
+    >>> save_or_show_plot(True, False)
+    # This will pass without any error.
+
+    >>> save_or_show_plot(False, True)
+    # This will pass without any error.
+
+    >>> save_or_show_plot(True, True)
+    # This will pass without any error.
+
+    Raise an error if both options are disabled:
+
+    >>> save_or_show_plot(False, False)
+    Traceback (most recent call last):
+        ...
+    ValueError: This function effectively does nothing since both
+    `save_plots` and `show_plots` are set to False. At least one of
+    these options must be True.
+    """
+    if not save_plots and not show_plots:
+        raise ValueError('This function effectively does nothing since both `save_plots` and `show_plots` are set to False.  At least one of these options must be True.')
