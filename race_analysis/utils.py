@@ -11,6 +11,47 @@ functions are useful for file system navigation and manipulation.
 """
 
 import os
+from typing import Optional
+
+from race_analysis.constants import DATA_DIRECTORY
+
+
+def get_data_files(data_directory: Optional[str] = DATA_DIRECTORY):
+    """
+    Retrieve all CSV files from the specified data directory.
+
+    This function searches the specified data directory for all files
+    with a '.csv' extension and returns them as a list.  By default,
+    the `"data/formatted"` directory is referenced.
+
+    Parameters
+    ----------
+    data_directory : str, optional
+        The directory to search for CSV files. If not provided,
+        defaults to `DATA_DIRECTORY`.
+
+    Returns
+    -------
+    list of str
+        A list containing the file paths of all CSV files in the
+        specified data directory.
+
+    See Also
+    --------
+    DATA_DIRECTORY : str
+        Directory containing all of the parseable data.
+
+    Examples
+    --------
+    >>> csv_files = get_data_files()
+    >>> print(csv_files)
+    ['/path/to/data/file1.csv', '/path/to/data/file2.csv']
+
+    >>> csv_files = get_data_files('custom_directory')
+    >>> print(csv_files)
+    ['custom_directory/file1.csv', 'custom_directory/file2.csv']
+    """
+    return get_files_with_extension(data_directory, '.csv')
 
 
 def get_files_with_extension(directory: str, extension: str) -> list[str]:
