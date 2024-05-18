@@ -1,4 +1,9 @@
+"""
+Map Plotting Functions
+======================
+"""
 
+from enum import Enum
 from typing import Optional
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
@@ -12,6 +17,29 @@ from race_analysis.laps_data import get_lap_indices, get_start_end_laps
 from race_analysis.plot_data import save_plot
 
 
+class GoogleSatTiles(cimgt.GoogleTiles):
+    def __init__(self, layer_type='m'):
+        self.layer_type = layer_type
+        super().__init__()
+
+    def _image_url(self, tile):
+        x, y, z = tile
+        url = f"https://mt.google.com/vt/lyrs={self.layer_type}&x={x}&y={y}&z={z}"
+        return url
+
+
+class MapType(Enum):
+    GOOGLE_ROADMAP = GoogleSatTiles(layer_type='m')
+    GOOGLE_SATELITE = GoogleSatTiles(layer_type='s')
+    GOOGLE_TERRAIN = GoogleSatTiles(layer_type='p')
+    GOOGLE_HYBRID = GoogleSatTiles(layer_type='y')
+    GOOGLE_DEFAULT = cimgt.GoogleTiles()
+    OSM = cimgt.OSM()
+
+    def __str__(self):
+        return f'MapType {self.name}'
+
+
 def plot_map(
         df: pd.DataFrame,
         data_to_plot: pd.Series,
@@ -19,6 +47,7 @@ def plot_map(
         lap_num: int,
         colorbar_label: str,
         data_filepath: str,
+        tile_source: Optional[MapType] = MapType.GOOGLE_ROADMAP,
     ) -> None:
     """
     Plots vehicle data on an OSM map for each lap.
@@ -61,26 +90,27 @@ def plot_map(
 
     # Normalize the speed values for color mapping
     norm = plt.Normalize(new_df[data_name].min(), new_df[data_name].max())
-
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
-    osm_tiles = cimgt.OSM()
 
-    # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': osm_tiles.crs})
-    ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
+    for map in MapType:
+        tile_source = map.value
 
-    # Add the tile layer
-    ax.add_image(osm_tiles, 15)  # The second argument is the zoom level
+        # Create a plot with an appropriate projection
+        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.crs})
+        ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
-    for _, row in new_df.iterrows():
-        color = cmap(norm(row[data_name]))
-        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
+        # Add the tile layer
+        ax.add_image(tile_source, 18)  # The second argument is the zoom level
 
-    plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
-    plt.title(f'Vehicle {data_name} on OSM Map - Lap {lap_num}')
-    save_plot(data_filepath, lap_num=lap_num)
-    plt.show()
+        for _, row in new_df.iterrows():
+            color = cmap(norm(row[data_name]))
+            ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
+
+        plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
+        plt.title(f'Vehicle {data_name} on {map.name} - Lap {lap_num}')
+        save_plot(data_filepath, name=f'{tile_source} {ax.get_title()}', lap_num=lap_num)
+        plt.show()
 
 
 def plot_map_every_lap(
