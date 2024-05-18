@@ -91,11 +91,11 @@ def get_lap_indices(
     if start_lap is None:
         start_lap = 2
     if end_lap is None:
-        end_lap = (df[lap_num_column].iloc[-1] - 1).magnitude
+        end_lap = int((df[lap_num_column].iloc[-1] - 1).magnitude)
 
-    for lap_number in range(start_lap, end_lap + 1):
-        lap_start_index = df.loc[df[lap_num_column] == lap_number].index[0]
-        lap_end_index = df.loc[df[lap_num_column] == lap_number].index[-1]
+    for lap_number in range(int(start_lap), int(end_lap) + 1):
+        lap_start_index = int(df.loc[df[lap_num_column] == lap_number].index[0])
+        lap_end_index = int(df.loc[df[lap_num_column] == lap_number].index[-1])
         lap_indices[lap_number] = (lap_start_index, lap_end_index)
 
     return lap_indices
@@ -129,7 +129,7 @@ def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
     subtracting 1 from the last value in the 'Lap Number' column.
     """
     start_lap_num = 2
-    end_lap_num = (df['Lap Number'].iloc[-1] - 1).magnitude
+    end_lap_num = int((df['Lap Number'].iloc[-1] - 1).magnitude)
 
     return start_lap_num, end_lap_num
 
@@ -300,45 +300,44 @@ def set_lap_num_in_data_csv() -> None:
         add_lap_numbers_to_csv(data_file)
 
 
-def reset_lap_times(lap_time_series: pd.Series) -> pd.Series:
+def reset_lap_times(lap_time_series: pd.Series) -> np.ndarray:
     """
-    Resets the lap times by subtracting the initial lap time.
+    Resets the lap times to start from zero and span the total
+    duration.
 
-    This function adjusts a series of lap times so that the first lap
-    time is zero and each subsequent lap time is the difference from
-    the first lap time.
+    This function takes a pandas Series of lap times and returns a
+    numpy array of lap times reset to start from zero, evenly
+    distributed over the total duration.
 
     Parameters
     ----------
     lap_time_series : pd.Series
-        A Pandas Series containing lap times.
+        A pandas Series containing the lap times.
 
     Returns
     -------
-    pd.Series
-        A Pandas Series with the initial lap time set to zero and
-        subsequent lap times adjusted accordingly.
+    np.ndarray
+        A numpy array with the reset lap times starting from zero.
+
+    Notes
+    -----
+    The function uses `np.linspace` to generate evenly spaced lap
+    times starting from zero up to the total duration covered by the
+    input lap times.
 
     Examples
     --------
     >>> import pandas as pd
-    >>> lap_times = pd.Series([30.5, 31.0, 29.8, 32.1])
+    >>> import numpy as np
+    >>> lap_times = pd.Series([10, 20, 30, 40, 50])
     >>> reset_lap_times(lap_times)
-    0    0.0
-    1    0.5
-    2   -0.7
-    3    1.6
-    dtype: float64
+    array([ 0., 10., 20., 30., 40.])
 
-    >>> lap_times2 = pd.Series([60.0, 62.5, 61.2, 63.4])
-    >>> reset_lap_times(lap_times2)
-    0    0.0
-    1    2.5
-    2    1.2
-    3    3.4
-    dtype: float64
+    >>> lap_times = pd.Series([5, 15, 25])
+    >>> reset_lap_times(lap_times)
+    array([ 0., 10., 20.])
     """
-    return lap_time_series - lap_time_series[0]
+    return np.linspace(0, lap_time_series.iloc[-1] - lap_time_series.iloc[0], len(lap_time_series))
 
 
 def identify_starting_point(df: pd.DataFrame) -> tuple:
