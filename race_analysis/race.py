@@ -1,3 +1,10 @@
+"""
+Race Analysis Functions
+=======================
+
+Methods to import and initialize race data for analysis.
+"""
+
 import pandas as pd
 
 from .column_names import COL_LAP_NUM

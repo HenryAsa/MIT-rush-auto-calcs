@@ -1,3 +1,10 @@
+"""
+Units-Handling and Units Definitions
+====================================
+
+Includes modules and classes from the `pint` Units package.
+"""
+
 import pint
 import pint_pandas
 

@@ -1,3 +1,11 @@
+"""
+DataFrame Columns Definitions and Extensions
+============================================
+
+Includes functions for defining additional columns to the master
+`race_data` DataFrame.
+"""
+
 import numpy as np
 import pandas as pd
 

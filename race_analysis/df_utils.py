@@ -1,5 +1,13 @@
-import pandas as pd
+"""
+Pandas DataFrame Utility Functions
+==================================
+
+Extension functions that streamline Pandas DataFrame operations,
+units-handling, and manipulating data within the DataFrames.
+"""
+
 from typing import Optional
+import pandas as pd
 
 from race_analysis.units import Q_
 

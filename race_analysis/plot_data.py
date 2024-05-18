@@ -1,7 +1,14 @@
-import matplotlib.pyplot as plt
+"""
+Generic Plotting Functions
+==========================
+
+Functions and methods designed to streamline plotting data.
+"""
+
 import os
-import pandas as pd
 from typing import Optional
+import matplotlib.pyplot as plt
+import pandas as pd
 
 from .constants import PLOTS_DIRECTORY
 from .df_utils import convert_series_to_magnitude

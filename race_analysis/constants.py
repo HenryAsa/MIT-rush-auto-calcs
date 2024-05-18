@@ -1,5 +1,8 @@
 """
 RUSH Auto Works Constants
+=========================
+
+Constant values that are used throughout the analysis.
 """
 
 from .units import u
