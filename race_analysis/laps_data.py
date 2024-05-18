@@ -1,10 +1,20 @@
+"""
+Lap-Data Functions
+==================
+"""
+
+import json
+from typing import Optional
+
 from geopy.distance import great_circle
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
-from typing import Optional
 
+from .column_names import COL_LATITUDE, COL_LONGITUDE
 from .df_utils import strip_df_of_units
+from .time_utils import convert_time_list_to_seconds
+from .utils import get_filename
 
 
 def get_lap_indices(
@@ -122,6 +132,167 @@ def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
     return start_lap_num, end_lap_num
 
 
+def get_lap_times_from_json(
+        dataset_name: str,
+        lap_times_filepath: Optional[str] = None,
+    ) -> list[float]:
+    """
+    Retrieve lap times from a JSON file for a specific dataset.
+
+    This function reads lap times from a JSON file and returns them
+    as a list of floats, representing the times in seconds. The JSON
+    file should contain lap times for various datasets identified by
+    their filenames.
+
+    Parameters
+    ----------
+    dataset_name : str
+        The name of the dataset to retrieve lap times for.
+    lap_times_filepath : Optional[str], default=None
+        The path to the JSON file containing lap times. If not
+        provided, defaults to 'data/lap_times.json'.
+
+    Returns
+    -------
+    list of float
+        A list of lap times in seconds for the specified dataset.
+
+    Raises
+    ------
+    NameError
+        If the dataset name is not found in the JSON file.
+
+    Examples
+    --------
+    Retrieve lap times for a given dataset from the default JSON file:
+
+    >>> get_lap_times_from_json('dataset_01')
+    [12.34, 13.56, 14.78]
+
+    Retrieve lap times from a specified JSON file:
+
+    >>> get_lap_times_from_json('dataset_01', 'path/to/lap_times.json')
+    [11.22, 12.34, 13.45]
+
+    Notes
+    -----
+    The JSON file should have the following structure:
+    {
+        "dataset_01_filename": ["12.34", "13.56", "14.78"],
+        "dataset_02_filename": ["11.22", "12.34", "13.45"]
+    }
+    """
+    data_filename = get_filename(dataset_name)
+
+    lap_times_filepath = 'data/lap_times.json' if lap_times_filepath is None else lap_times_filepath
+    all_lap_times = json.load(lap_times_filepath)
+
+    if data_filename not in all_lap_times:
+        raise NameError(f'"{data_filename}" was not in the lap_times.json file')
+
+    return convert_time_list_to_seconds(all_lap_times[data_filename])
+
+
+def add_lap_numbers_to_csv(
+        csv_to_modify: str,
+        new_csv_filename: Optional[str] = None,
+        lap_times: Optional[list[float]] = None,
+    ) -> None:
+    """
+    Adds lap numbers to a CSV file based on lap times.
+
+    If lap times are not provided, they are fetched from the
+    `lap_times.json` file associated with the CSV.
+
+    Parameters
+    ----------
+    csv_to_modify : str
+        The path to the CSV file to be modified.
+    new_csv_filename : Optional[str], optional
+        The filename for the new CSV file with lap numbers. If not
+        provided, the original CSV file is overwritten.
+    lap_times : Optional[list[float]], optional
+        A list of lap times. If not provided, lap times are fetched
+        from a JSON file.
+
+    Returns
+    -------
+    None
+        This function does not return any value, but either modifies
+        the original CSV file or saves the CSV as a new file.
+
+    Examples
+    --------
+    Adding lap numbers to an existing CSV and saving it as a new file:
+
+    >>> add_lap_numbers_to_csv('race_data.csv', 'race_data_with_laps.csv', [12.5, 14.3, 15.2])
+
+    Adding lap numbers to an existing CSV and overwriting the original file:
+
+    >>> add_lap_numbers_to_csv('race_data.csv', lap_times=[12.5, 14.3, 15.2])
+
+    Adding lap numbers by fetching lap times from a JSON file:
+
+    >>> add_lap_numbers_to_csv('race_data.csv')
+    """
+    if lap_times is None:
+        lap_times = get_lap_times_from_json(get_filename(csv_to_modify))
+
+    race_data = pd.read_csv(
+        filepath_or_buffer=csv_to_modify,
+        header=[0,1],
+    )
+    cumulative_lap_times = [sum(lap_times[:lap_num+1]) for lap_num in range(len(lap_times))]
+
+    race_data['Lap Number'] = len(cumulative_lap_times) - 1
+
+    for current_lap in reversed(range(1, len(cumulative_lap_times))):
+        race_data.loc[race_data[('Time', 's')] < cumulative_lap_times[current_lap], 'Lap Number'] = current_lap
+
+    race_data.to_csv(csv_to_modify if new_csv_filename is None else new_csv_filename)
+
+
+def reset_lap_times(lap_time_series: pd.Series) -> pd.Series:
+    """
+    Resets the lap times by subtracting the initial lap time.
+
+    This function adjusts a series of lap times so that the first lap
+    time is zero and each subsequent lap time is the difference from
+    the first lap time.
+
+    Parameters
+    ----------
+    lap_time_series : pd.Series
+        A Pandas Series containing lap times.
+
+    Returns
+    -------
+    pd.Series
+        A Pandas Series with the initial lap time set to zero and
+        subsequent lap times adjusted accordingly.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> lap_times = pd.Series([30.5, 31.0, 29.8, 32.1])
+    >>> reset_lap_times(lap_times)
+    0    0.0
+    1    0.5
+    2   -0.7
+    3    1.6
+    dtype: float64
+
+    >>> lap_times2 = pd.Series([60.0, 62.5, 61.2, 63.4])
+    >>> reset_lap_times(lap_times2)
+    0    0.0
+    1    2.5
+    2    1.2
+    3    3.4
+    dtype: float64
+    """
+    return lap_time_series - lap_time_series[0]
+
+
 def identify_starting_point(df: pd.DataFrame) -> tuple:
     """
     Identify the centroid of the most populated cluster in geographic
@@ -164,15 +335,15 @@ def identify_starting_point(df: pd.DataFrame) -> tuple:
     kms_per_radian = 6371.0088
     epsilon = 0.05 / kms_per_radian  # convert to radians for the haversine formula
     db = DBSCAN(eps=epsilon, min_samples=10, algorithm='ball_tree', metric='haversine').fit(
-        np.radians(strip_df_of_units(df[['GPS Latitude', 'GPS Longitude']], rename_cols_with_units=False)))
+        np.radians(strip_df_of_units(df[[COL_LATITUDE, COL_LONGITUDE]], rename_cols_with_units=False)))
     cluster_labels = db.labels_
-    # Find the cluster that has the most points (most likely to be the start/finish line)
+
     largest_cluster = np.argmax(np.bincount(cluster_labels[cluster_labels >= 0]))
 
     # Compute the centroid of the largest cluster
     largest_cluster_indices = np.where(cluster_labels == largest_cluster)
     largest_cluster_points = df.iloc[largest_cluster_indices]
-    centroid = (largest_cluster_points['GPS Latitude'].mean(), largest_cluster_points['GPS Longitude'].mean())
+    centroid = (largest_cluster_points[COL_LATITUDE].mean(), largest_cluster_points[COL_LONGITUDE].mean())
     return centroid
 
 
@@ -232,21 +403,19 @@ def find_laps(df: pd.DataFrame) -> pd.DataFrame:
     8           1               9.0
     9           2               0.0
     """
-    minimal_df = strip_df_of_units(df[['Delta Time', 'GPS Latitude', 'GPS Longitude']], rename_cols_with_units=False)
-    # Identify the starting point (most visited point, likely to be the start/finish line)
+    minimal_df = strip_df_of_units(df[['Delta Time', COL_LATITUDE, COL_LONGITUDE]], rename_cols_with_units=False)
     start_lat, start_lon = identify_starting_point(minimal_df)
 
     # Threshold for considering the car has passed the start/finish line (in kilometers)
     threshold = 0.05
 
-    # Initialize lap counter and list to store the lap number for each point
     current_lap = 1
     current_lap_time = 0
     lap_numbers = []
     lap_times = []
 
     for index, row in minimal_df.iterrows():
-        distance_from_start = great_circle((start_lat, start_lon), (row['GPS Latitude'], row['GPS Longitude'])).kilometers
+        distance_from_start = great_circle((start_lat, start_lon), (row[COL_LATITUDE], row[COL_LONGITUDE])).kilometers
 
         is_new_lap = (
             distance_from_start <= threshold and    # Ensure distance from starting point is reasonable
@@ -267,43 +436,3 @@ def find_laps(df: pd.DataFrame) -> pd.DataFrame:
     df['Current Lap Time'] = pd.Series(data=lap_times, name='Lap Time', dtype='pint[second]')
 
     return df
-
-
-def reset_lap_times(lap_time_series: pd.Series) -> np.ndarray:
-    """
-    Resets the lap times to start from zero and span the total
-    duration.
-
-    This function takes a pandas Series of lap times and returns a
-    numpy array of lap times reset to start from zero, evenly
-    distributed over the total duration.
-
-    Parameters
-    ----------
-    lap_time_series : pd.Series
-        A pandas Series containing the lap times.
-
-    Returns
-    -------
-    np.ndarray
-        A numpy array with the reset lap times starting from zero.
-
-    Notes
-    -----
-    The function uses `np.linspace` to generate evenly spaced lap
-    times starting from zero up to the total duration covered by the
-    input lap times.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> import numpy as np
-    >>> lap_times = pd.Series([10, 20, 30, 40, 50])
-    >>> reset_lap_times(lap_times)
-    array([ 0., 10., 20., 30., 40.])
-
-    >>> lap_times = pd.Series([5, 15, 25])
-    >>> reset_lap_times(lap_times)
-    array([ 0., 10., 20.])
-    """
-    return np.linspace(0, lap_time_series.iloc[-1] - lap_time_series.iloc[0], len(lap_time_series))

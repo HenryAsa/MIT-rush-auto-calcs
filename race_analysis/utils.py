@@ -1,4 +1,6 @@
-"""``utils``
+"""
+General Utility Functions
+=========================
 
 A collection of utility functions for file and directory operations.
 
