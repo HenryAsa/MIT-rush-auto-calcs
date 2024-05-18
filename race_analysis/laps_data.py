@@ -11,10 +11,12 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
+from race_analysis.constants import DATA_DIRECTORY
+
 from .column_names import COL_LATITUDE, COL_LONGITUDE
 from .df_utils import strip_df_of_units
 from .time_utils import convert_time_list_to_seconds
-from .utils import get_filename
+from .utils import get_filename, get_files_with_extension
 
 
 def get_lap_indices(
@@ -162,6 +164,23 @@ def get_lap_times_from_json(
     NameError
         If the dataset name is not found in the JSON file.
 
+    See Also
+    --------
+    add_lap_numbers_to_csv : Adds lap numbers to a CSV file based on
+                             lap times.
+
+    Notes
+    -----
+    The JSON file should have the following structure:
+
+    .. code-block:: json
+
+        {
+            "dataset_01_filename": ["12.34", "13.56", "14.78"],
+            "dataset_02_filename": ["11.22", "12.34", "13.45"]
+        }
+
+
     Examples
     --------
     Retrieve lap times for a given dataset from the default JSON file:
@@ -173,19 +192,13 @@ def get_lap_times_from_json(
 
     >>> get_lap_times_from_json('dataset_01', 'path/to/lap_times.json')
     [11.22, 12.34, 13.45]
-
-    Notes
-    -----
-    The JSON file should have the following structure:
-    {
-        "dataset_01_filename": ["12.34", "13.56", "14.78"],
-        "dataset_02_filename": ["11.22", "12.34", "13.45"]
-    }
     """
     data_filename = get_filename(dataset_name)
 
     lap_times_filepath = 'data/lap_times.json' if lap_times_filepath is None else lap_times_filepath
-    all_lap_times = json.load(lap_times_filepath)
+
+    with open(lap_times_filepath) as lap_times_file:
+        all_lap_times = json.load(lap_times_file)
 
     if data_filename not in all_lap_times:
         raise NameError(f'"{data_filename}" was not in the lap_times.json file')
@@ -221,6 +234,11 @@ def add_lap_numbers_to_csv(
         This function does not return any value, but either modifies
         the original CSV file or saves the CSV as a new file.
 
+    See Also
+    --------
+    get_lap_times_from_json : Retrieve lap times from a JSON file for
+                              a specific dataset.
+
     Examples
     --------
     Adding lap numbers to an existing CSV and saving it as a new file:
@@ -250,6 +268,36 @@ def add_lap_numbers_to_csv(
         race_data.loc[race_data[('Time', 's')] < cumulative_lap_times[current_lap], 'Lap Number'] = current_lap
 
     race_data.to_csv(csv_to_modify if new_csv_filename is None else new_csv_filename)
+
+
+def set_lap_num_in_data_csv() -> None:
+    """
+    Sets lap numbers in all CSV files within the `"data/formatted"`
+    directory.
+
+    This function iterates over all CSV files in the specified data
+    directory and adds lap numbers to each file by calling the
+    `add_lap_numbers_to_csv` function.
+
+    Returns
+    -------
+    None
+        This function does not return any value, but does modify the
+        original data files.
+
+    See Also
+    --------
+    add_lap_numbers_to_csv : Adds lap numbers to a CSV file based on
+                             lap times.
+
+    Examples
+    --------
+    Set lap numbers in all CSV files in the data directory:
+
+    >>> set_lap_num_in_data_csv()
+    """
+    for data_file in get_files_with_extension(DATA_DIRECTORY, '.csv'):
+        add_lap_numbers_to_csv(data_file)
 
 
 def reset_lap_times(lap_time_series: pd.Series) -> pd.Series:
