@@ -17,26 +17,138 @@ from race_analysis.laps_data import get_lap_indices, get_start_end_laps
 from race_analysis.plot_data import save_plot
 
 
-class GoogleSatTiles(cimgt.GoogleTiles):
+class GoogleCustomTiles(cimgt.GoogleTiles):
+    """
+    Custom Google Maps tile provider with selectable layer type.
+
+    This class provides Google Maps tiles with selectable layer
+    types, which can be one of 'm' (map), 's' (satellite), 'p'
+    (terrain), or 'y' (hybrid).
+
+    Parameters
+    ----------
+    layer_type : str, optional
+        The type of Google Maps layer to use. Must be one of
+        {'m', 's', 'p', 'y'}. Default is 'm'.
+
+    Notes
+    -----
+    Available layer types include `'m'` (map), `'s'` (satellite),
+    `'p'` (terrain), and `'y'` hybrid.
+
+    Examples
+    --------
+    >>> tiles = GoogleCustomTiles(layer_type='s')
+    >>> url = tiles._image_url((1, 2, 3))
+    >>> print(url)
+    'https://mt.google.com/vt/lyrs=s&x=1&y=2&z=3'
+    """
+
     def __init__(self, layer_type='m'):
+        """
+        Initialize GoogleCustomTiles with the specified layer type.
+
+        Parameters
+        ----------
+        layer_type : str, optional
+            The type of Google Maps layer to use. Must be one of
+            {'m', 's', 'p', 'y'}. Default is 'm'.
+        """
+        assert layer_type in {'m', 's', 'p', 'y'}
         self.layer_type = layer_type
         super().__init__()
 
     def _image_url(self, tile):
+        """
+        Generate the URL for a Google Maps tile.
+
+        Parameters
+        ----------
+        tile : tuple of int
+            A tuple (x, y, z) representing the tile coordinates and
+            zoom level.
+
+        Returns
+        -------
+        url : str
+            The URL for the specified Google Maps tile.
+
+        Examples
+        --------
+        >>> tiles = GoogleCustomTiles(layer_type='y')
+        >>> url = tiles._image_url((1, 2, 3))
+        >>> print(url)
+        'https://mt.google.com/vt/lyrs=y&x=1&y=2&z=3'
+        """
         x, y, z = tile
         url = f"https://mt.google.com/vt/lyrs={self.layer_type}&x={x}&y={y}&z={z}"
         return url
 
 
 class MapType(Enum):
-    GOOGLE_ROADMAP = GoogleSatTiles(layer_type='m')
-    GOOGLE_SATELITE = GoogleSatTiles(layer_type='s')
-    GOOGLE_TERRAIN = GoogleSatTiles(layer_type='p')
-    GOOGLE_HYBRID = GoogleSatTiles(layer_type='y')
+    """
+    Enum for different map types including Google Maps and
+    OpenStreetMap.
+
+    This enum defines various map types such as Google Maps with
+    different layer types and OpenStreetMap.
+
+    Attributes
+    ----------
+    GOOGLE_ROADMAP : GoogleCustomTiles
+        Google Maps with road map layer.
+    GOOGLE_SATELITE : GoogleCustomTiles
+        Google Maps with satellite layer.
+    GOOGLE_TERRAIN : GoogleCustomTiles
+        Google Maps with terrain layer.
+    GOOGLE_HYBRID : GoogleCustomTiles
+        Google Maps with hybrid layer.
+    GOOGLE_DEFAULT : cimgt.GoogleTiles
+        Default Google Maps tiles.
+    OSM : cimgt.OSM
+        OpenStreetMap tiles.
+
+    See Also
+    --------
+    GoogleCustomTiles : Custom Google Maps tile provider with
+                        selectable layer type.
+    cimgt.GoogleTiles : Default Google Maps tile provider from
+                        Cartopy.
+    cimgt.OSM : OpenStreetMap tile provider from Cartopy.
+
+    Notes
+    -----
+    To access the actual MapType `cartopy.io.img_tiles` object, simply
+    do `MapType.value` for some instance of a MapType.
+
+    Examples
+    --------
+    >>> map_type = MapType.GOOGLE_ROADMAP
+    >>> print(map_type)
+    MapType GOOGLE_ROADMAP
+    """
+    GOOGLE_ROADMAP = GoogleCustomTiles(layer_type='m')
+    GOOGLE_SATELITE = GoogleCustomTiles(layer_type='s')
+    GOOGLE_TERRAIN = GoogleCustomTiles(layer_type='p')
+    GOOGLE_HYBRID = GoogleCustomTiles(layer_type='y')
     GOOGLE_DEFAULT = cimgt.GoogleTiles()
     OSM = cimgt.OSM()
 
     def __str__(self):
+        """
+        Return the string representation of the MapType.
+
+        Returns
+        -------
+        str
+            The string representation of the MapType.
+
+        Examples
+        --------
+        >>> map_type = MapType.OSM
+        >>> str(map_type)
+        'MapType OSM'
+        """
         return f'MapType {self.name}'
 
 
@@ -47,33 +159,67 @@ def plot_map(
         lap_num: int,
         colorbar_label: str,
         data_filepath: str,
-        tile_source: Optional[MapType] = MapType.GOOGLE_ROADMAP,
+        tile_source: Optional[MapType] = MapType.OSM,
     ) -> None:
     """
-    Plots vehicle data on an OSM map for each lap.
+    Plot a map with data points overlaid using specified map tiles.
 
-    This function generates a map plot for each lap of the vehicle,
-    displaying the specified data (e.g., speed) on an OpenStreetMap
-    (OSM) map. The data is color-coded based on its value and a
-    colorbar is included for reference.
+    This function plots a map with data points from a pandas
+    DataFrame, overlaid on map tiles from various sources, for a
+    specific lap number.
 
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame containing the telemetry data, including latitude
-        and longitude information.
+        DataFrame containing the latitude and longitude data.
     data_to_plot : pd.Series
-        Series containing the data to be plotted (e.g., speed).
-    data_units : str | pint.Unit
+        Series containing the data to be plotted.
+    data_units : str or pint.Unit
         Units of the data to be plotted.
+    lap_num : int
+        Lap number for which the data should be plotted.
     colorbar_label : str
-        Label for the colorbar indicating the units of the data.
+        Label for the colorbar indicating the data units.
+    data_filepath : str
+        File path to save the plot.
+    tile_source : MapType, optional
+        The map tile source to use. Default is MapType.OSM.
 
     Returns
     -------
     None
-        This function does not return any value. It generates and
-        displays a plot for each lap.
+        This function does not return any value. It saves the plot to
+        the specified file path and displays it.
+
+    See Also
+    --------
+    MapType : Enum for different map types including Google Maps and
+              OpenStreetMap.
+    GoogleCustomTiles : Custom Google Maps tile provider with
+                        selectable layer type.
+    get_lap_indices : Function to get the start and end indices for
+                      each lap.
+    slice_into_df : Function to slice data into a DataFrame based on
+                    indices.
+
+    Notes
+    -----
+    This function uses the Cartopy library to create map plots with
+    various map tile sources.  The `tile_source` parameter allows
+    switching between different map types like Google Maps and
+    OpenStreetMap.  The data to be plotted should have compatible
+    units with the specified `data_units`.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'Latitude': [34.0219, 34.0220, 34.0221],
+    ...     'Longitude': [-118.4814, -118.4815, -118.4816],
+    ...     'Speed': [10, 20, 30]
+    ... })
+    >>> data_to_plot = df['Speed']
+    >>> plot_map(df, data_to_plot, 'meters/second', 0,
+    ...          'Speed (m/s)', 'path/to/save/plot.png')
     """
     data_name = data_to_plot.name
     lap_indices = get_lap_indices(df)
@@ -109,7 +255,7 @@ def plot_map(
 
         plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
         plt.title(f'Vehicle {data_name} on {map.name} - Lap {lap_num}')
-        save_plot(data_filepath, name=f'{tile_source} {ax.get_title()}', lap_num=lap_num)
+        save_plot(data_filepath, name=f'{map.name} {ax.get_title()}', lap_num=lap_num)
         plt.show()
 
 
@@ -123,30 +269,61 @@ def plot_map_every_lap(
         end_lap_num: Optional[int] = None,
     ) -> None:
     """
-    Plots vehicle data on an OSM map for each lap.
+    Plot maps for each lap with data points overlaid using specified map tiles.
 
-    This function generates a map plot for each lap of the vehicle,
-    displaying the specified data (e.g., speed) on an OpenStreetMap
-    (OSM) map. The data is color-coded based on its value and a
-    colorbar is included for reference.
+    This function plots maps with data points from a pandas DataFrame for
+    each lap within the specified range, using the given map tiles.
 
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame containing the telemetry data, including latitude
-        and longitude information.
+        DataFrame containing the latitude and longitude data.
     data_to_plot : pd.Series
-        Series containing the data to be plotted (e.g., speed).
-    data_units : str | pint.Unit
+        Series containing the data to be plotted.
+    data_units : str or pint.Unit
         Units of the data to be plotted.
     colorbar_label : str
-        Label for the colorbar indicating the units of the data.
+        Label for the colorbar indicating the data units.
+    data_filepath : str
+        File path to save the plots.
+    start_lap_num : int, optional
+        Starting lap number for which the data should be plotted.
+        If not provided, the first lap number in the DataFrame will be
+        used.
+    end_lap_num : int, optional
+        Ending lap number for which the data should be plotted.  If
+        not provided, the last lap number in the DataFrame will be
+        used.
 
     Returns
     -------
     None
-        This function does not return any value. It generates and
-        displays a plot for each lap.
+        This function does not return any value. It saves the plots
+        to the specified file path and displays them.
+
+    See Also
+    --------
+    plot_map : Plot a map with data points overlaid using specified
+               map tiles.
+    get_start_end_laps : Function to get the start and end lap numbers
+                         from the DataFrame.
+
+    Notes
+    -----
+    This function iterates over the range of lap numbers and calls the
+    `plot_map` function for each lap.  It uses the Cartopy library to
+    create map plots with various map tile sources.
+
+    Examples
+    --------
+    >>> df = pd.DataFrame({
+    ...     'Latitude': [34.0219, 34.0220, 34.0221] * 3,
+    ...     'Longitude': [-118.4814, -118.4815, -118.4816] * 3,
+    ...     'Speed': [10, 20, 30, 15, 25, 35, 20, 30, 40]
+    ... })
+    >>> data_to_plot = df['Speed']
+    >>> plot_map_every_lap(df, data_to_plot, 'meters/second',
+    ...                    'Speed (m/s)', 'path/to/save/plot.png', 0, 2)
     """
     default_start_lap_num, default_end_lap_num = get_start_end_laps(df)
 
