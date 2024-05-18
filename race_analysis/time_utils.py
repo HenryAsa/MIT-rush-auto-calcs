@@ -8,7 +8,9 @@ formatted as 'MM:SS.sss' into total seconds as floating-point numbers.
 """
 
 
-def convert_time_str_to_seconds(time_str: str) -> float:
+def convert_time_str_to_seconds(
+        time_str: str,
+    ) -> float:
     """
     Convert a time string in 'MM:SS.sss' format to total seconds.
 
@@ -49,7 +51,9 @@ def convert_time_str_to_seconds(time_str: str) -> float:
     return total_seconds
 
 
-def convert_time_list_to_seconds(time_list: list[str]) -> list[float]:
+def convert_time_list_to_seconds(
+        time_list: list[str],
+    ) -> list[float]:
     """
     Convert a list of time strings in 'MM:SS.sss' format to total
     seconds.
@@ -90,7 +94,9 @@ def convert_time_list_to_seconds(time_list: list[str]) -> list[float]:
     return [convert_time_str_to_seconds(time_str) for time_str in time_list]
 
 
-def convert_seconds_to_time_str(seconds: float) -> str:
+def convert_seconds_to_time_str(
+        seconds: float,
+    ) -> str:
     """
     Convert a time duration in seconds to a formatted time string.
 
@@ -130,7 +136,9 @@ def convert_seconds_to_time_str(seconds: float) -> str:
     return formatted_time
 
 
-def convert_seconds_to_time_list(seconds_list: list[float]) -> list[str]:
+def convert_seconds_to_time_list(
+        seconds_list: list[float],
+    ) -> list[str]:
     """
     Convert a list of time durations in seconds to a list of formatted
     time strings.

@@ -12,7 +12,10 @@ from .columns import initialize_channels
 from .laps_data import find_laps
 
 
-def generate_units_dict(csv_filepath: str, units: dict[str, str]) -> dict[str, str]:
+def generate_units_dict(
+        csv_filepath: str,
+        units: dict[str, str]
+    ) -> dict[str, str]:
     """
     Generate a dictionary of units from a CSV file.
 
@@ -57,7 +60,10 @@ def generate_units_dict(csv_filepath: str, units: dict[str, str]) -> dict[str, s
     return units
 
 
-def load_race(race_data_filepath: str, units: dict[str, str]) -> pd.DataFrame:
+def load_race(
+        race_data_filepath: str,
+        units: dict[str, str]
+    ) -> pd.DataFrame:
     """
     Load race data from a CSV file and quantify the units using Pint.
 

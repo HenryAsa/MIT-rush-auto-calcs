@@ -84,7 +84,10 @@ def export_data_to_csv(
     export_df.to_csv(filename)
 
 
-def mat_to_csv(mat_filepath: str, csv_filepath: str) -> None:
+def mat_to_csv(
+        mat_filepath: str,
+        csv_filepath: str,
+    ) -> None:
     """
     Convert variables from a MATLAB .mat file to individual .csv files.
 
@@ -138,7 +141,10 @@ def mat_to_csv(mat_filepath: str, csv_filepath: str) -> None:
             print(f"Saved {key} to {specific_csv_filepath}")
 
 
-def mats_to_csv(mat_files: Iterable[str], csv_filepath: str) -> None:
+def mats_to_csv(
+        mat_files: Iterable[str],
+        csv_filepath: str,
+    ) -> None:
     """
     Convert variables from multiple MATLAB .mat files into a single
     .csv file.

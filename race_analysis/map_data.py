@@ -160,6 +160,8 @@ def plot_map(
         colorbar_label: str,
         data_filepath: str,
         tile_source: Optional[MapType] = MapType.OSM,
+        save_plots: bool = True,
+        show_plots: bool = False,
     ) -> None:
     """
     Plot a map with data points overlaid using specified map tiles.
@@ -184,6 +186,15 @@ def plot_map(
         File path to save the plot.
     tile_source : MapType, optional
         The map tile source to use. Default is MapType.OSM.
+    save_plot : bool, optional (default True)
+        Boolean indicating whether or not the generated plot should be
+        saved as a file.  If True, the plot will be saved.  If False,
+        the plot will not be saved.  By default True.
+    show_plot : bool, optional (default False)
+        Boolean indicating whether or not the generated plot should be
+        displayed while running.  If False, the plot will not be
+        displayed.  If True, the plot will be displayed.  By default
+        False.
 
     Returns
     -------
@@ -255,8 +266,11 @@ def plot_map(
 
         plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
         plt.title(f'Vehicle {data_name} on {map.name} - Lap {lap_num}')
-        save_plot(data_filepath, name=f'{map.name} {ax.get_title()}', lap_num=lap_num)
-        plt.show()
+
+        if save_plots:
+            save_plot(data_filepath, name=f'{map.name} {ax.get_title()}', lap_num=lap_num)
+        if show_plots:
+            plt.show()
 
 
 def plot_map_every_lap(
@@ -267,6 +281,8 @@ def plot_map_every_lap(
         data_filepath: str,
         start_lap_num: Optional[int] = None,
         end_lap_num: Optional[int] = None,
+        save_plots: bool = True,
+        show_plots: bool = False,
     ) -> None:
     """
     Plot maps for each lap with data points overlaid using specified map tiles.
@@ -294,6 +310,15 @@ def plot_map_every_lap(
         Ending lap number for which the data should be plotted.  If
         not provided, the last lap number in the DataFrame will be
         used.
+    save_plots : bool, optional (default True)
+        Boolean indicating whether or not the generated plot should be
+        saved as a file.  If True, the plot will be saved.  If False,
+        the plot will not be saved.  By default True.
+    show_plots : bool, optional (default False)
+        Boolean indicating whether or not the generated plot should be
+        displayed while running.  If False, the plot will not be
+        displayed.  If True, the plot will be displayed.  By default
+        False.
 
     Returns
     -------
@@ -340,4 +365,6 @@ def plot_map_every_lap(
             lap_num=lap_num,
             colorbar_label=colorbar_label,
             data_filepath=data_filepath,
+            save_plots=save_plots,
+            show_plots=show_plots
         )

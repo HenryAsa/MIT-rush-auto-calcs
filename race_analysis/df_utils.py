@@ -176,7 +176,7 @@ def magnitude_of_df_columns(
 
 def strip_df_of_units(
         data_df: pd.DataFrame | pd.Series,
-        rename_cols_with_units: bool = True
+        rename_cols_with_units: bool = True,
     ) -> pd.DataFrame | pd.Series:
     """
     Strip units from a pandas DataFrame or Series object, with an
@@ -331,8 +331,8 @@ def columns_during_state(
     Parameters
     ----------
     df : pd.DataFrame
-        The input pint dimensionalized DataFrame containing data
-        and state columns.
+        The input pint dimensionalized DataFrame containing data and
+        state columns.
     data_columns : str | list[str]
         The column(s) to be filtered based on the state columns.
     state_columns : str | list[str]
@@ -445,7 +445,7 @@ def columns_during_state(
     else:
         new_df = df[data_columns].where(is_on)
 
-    new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name}' for column_name in new_df.columns]
+    new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name.casefold()}' for column_name in new_df.columns]
 
     if len(new_df.columns) == 1:
         return new_df[new_df.columns[0]]
