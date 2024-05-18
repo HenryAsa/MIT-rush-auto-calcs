@@ -51,6 +51,7 @@ exclude_patterns = []
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
     'scipy': ('https://docs.scipy.org/doc/scipy', None),
     'matplotlib': ('https://matplotlib.org/stable', None),
     'imageio': ('https://imageio.readthedocs.io/en/stable', None),
@@ -63,6 +64,7 @@ intersphinx_mapping = {
     'dlpack': ('https://dmlc.github.io/dlpack/latest', None),
     'pint': ('https://pint.readthedocs.io/en/stable', None),
     'cartopy': ('https://scitools.org.uk/cartopy/docs/latest', None),
+    'sphinx': ('https://www.sphinx-doc.org/en/master', None),
     # 'pint_pandas': ('https://pint.readthedocs.io/en/0.18/pint-pandas.html', None),
 }
 
@@ -94,3 +96,33 @@ autosummary_imported_members = True
 html_theme_options = {
     "github_url": "https://github.com/HenryAsa/MIT-rush-auto-calcs",
 }
+
+
+# -----------------------------------------------------------------------------
+# Custom event handlers
+# -----------------------------------------------------------------------------
+
+from sphinx.application import Sphinx
+
+module_mappings = {
+    'cimgt': 'cartopy.io.img_tiles',
+    'np': 'numpy',
+    'pd': 'pandas',
+    'plt': 'matplotlib.pyplt',
+    # Add more mappings as needed
+}
+
+def replace_modules_with_full_path(app, what, name, obj, options, signature, return_annotation):
+    if signature:
+        for alias, fullpath in module_mappings.items():
+            signature = signature.replace(f'{alias}.', f'{fullpath}.')
+    return (signature, return_annotation)
+
+def replace_modules_in_docstring(app, what, name, obj, options, lines):
+    for i, line in enumerate(lines):
+        for alias, fullpath in module_mappings.items():
+            lines[i] = line.replace(f'{alias}.', f'{fullpath}.')
+
+def setup(app: Sphinx):
+    app.connect('autodoc-process-signature', replace_modules_with_full_path)
+    app.connect('autodoc-process-docstring', replace_modules_in_docstring)
