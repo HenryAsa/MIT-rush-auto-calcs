@@ -27,20 +27,25 @@ vehicle_specs = {
         M_KEY: (513 * u.kg),
         PRICE: (39875 * u.USD)
     },
+    "RUSH SRX (Unreleased)": {          # https://rushautoworks.com/car_post/rush-srx/
+        P_KEY: (230 * u.hp),            # 220 whp (Min) with 30whp on PTP (180 seconds per session)
+        M_KEY: (1195 * u.lb),
+        PRICE: (83675 * u.USD),
+    },
     "Bugatti Chiron": {                 # https://en.wikipedia.org/wiki/Bugatti_Chiron
         P_KEY: (1103 * u.kW),
         M_KEY: (1996 * u.kg),
         PRICE: (3300000 * u.USD),
     },
-    "Porsche 911 Turbo": {
+    "Porsche 911 Turbo": {              # https://www.porsche.com/usa/models/911/911-turbo-models/911-turbo/
         P_KEY: (572 * u.hp),
         M_KEY: (3635 * u.lb),
-        PRICE: (197200 * u.USD),        # https://www.porsche.com/usa/models/911/911-turbo-models/911-turbo/
+        PRICE: (197200 * u.USD),
     },
     "Porsche 911 Carerra": {            # https://www.porsche.com/usa/models/911/911-models/carrera/
         P_KEY: (379 * u.hp),
         M_KEY: (3354 * u.lb),
-        PRICE: (114400 * u.USD),        # https://www.porsche.com/usa/models/911/911-models/carrera/
+        PRICE: (114400 * u.USD),
     },
     "BMW M3 Competition": {             # https://www.bmwusa.com/vehicles/m-models/m3-sedan/overview.html#performance
         P_KEY: (503 * u.hp),
@@ -62,8 +67,8 @@ vehicle_specs = {
         M_KEY: (3188 * u.lb),
         PRICE: (44795 * u.USD),
     },
-    "Lotus Emira" : {
-        P_KEY: (360 * u.hp),            # https://media.lotuscars.com/en/models/emira.html
+    "Lotus Emira" : {                   # https://media.lotuscars.com/en/models/emira.html
+        P_KEY: (360 * u.hp),
         M_KEY: (1405 * u.kg),
         PRICE: (99900 * u.USD),
     },
@@ -72,7 +77,7 @@ vehicle_specs = {
         M_KEY: (1475 * u.kg),
         PRICE: (280900 * u.USD),
     },
-    "Audi R8 Coupé V10": {
+    "Audi R8 Coupé V10": {              # https://www.audi-mediacenter.com/en/audi-r8-coupe-v10-performance-quattro-14430
         P_KEY: (456 * u.kW),
         M_KEY: (1670 * u.kg),
         PRICE: (158600 * u.USD),
@@ -135,7 +140,7 @@ vehicle_df_sorted = vehicle_df.sort_values(by='Power to Mass', ascending=False)
 
 print(vehicle_df.to_markdown(index=False))
 
-# Plotting the sorted data with RUSH SR-1 highlighted
+# Plotting the sorted data with RUSH SR highlighted
 fig, ax1 = plt.subplots(figsize=(14, 8))
 
 color = 'tab:red'
@@ -145,7 +150,7 @@ ax1.set_ylabel('Power to Mass (hp/ton)', color=color)
 
 bars = ax1.bar(vehicle_df_sorted['Vehicle'], vehicle_df_sorted['Power to Mass'], color=color, alpha=0.6)
 for bar, vehicle in zip(bars, vehicle_df_sorted['Vehicle']):
-    if vehicle == "RUSH SR-1":
+    if vehicle == "RUSH SR":
         bar.set_color(highlight_color)
 
 ax1.tick_params(axis='y', labelcolor=color)
@@ -155,7 +160,7 @@ color = 'tab:blue'
 ax2.set_ylabel('PTM to Price (hp/ton/USD)', color=color)
 line, = ax2.plot(vehicle_df_sorted['Vehicle'], vehicle_df_sorted['PTM to Price'], color=color, marker='o')
 for i, vehicle in enumerate(vehicle_df_sorted['Vehicle']):
-    if vehicle == "RUSH SR-1":
+    if vehicle == "RUSH SR":
         ax2.plot(vehicle, vehicle_df_sorted['PTM to Price'].iloc[i], color=highlight_color, marker='o')
 
 ax2.tick_params(axis='y', labelcolor=color)
@@ -168,11 +173,11 @@ plt.close()
 
 
 
-# Creating a bar plot to show the PTM to Price ratio for various vehicles, highlighting RUSH SR-1
+# Creating a bar plot to show the PTM to Price ratio for various vehicles, highlighting RUSH SR
 
 vehicle_df_sorted = vehicle_df.sort_values(by='PTM to Price', ascending=False)
 
-# Plotting the sorted data with RUSH SR-1 highlighted
+# Plotting the sorted data with RUSH SR highlighted
 fig, ax = plt.subplots(figsize=(14, 8))
 
 color = 'tab:blue'
@@ -181,17 +186,17 @@ ax.set_ylabel('PTM to Price (hp/ton/USD)', color=color)
 
 bars = ax.bar(vehicle_df_sorted['Vehicle'], vehicle_df_sorted['PTM to Price'], color=color, alpha=0.6)
 for bar, vehicle in zip(bars, vehicle_df_sorted['Vehicle']):
-    if vehicle == "RUSH SR-1":
+    if vehicle == "RUSH SR":
         bar.set_color(highlight_color)
 
 ax.tick_params(axis='y', labelcolor=color)
 
-# Adding a text box for RUSH SR-1
-rush_sr1_index = vehicle_df_sorted[vehicle_df_sorted['Vehicle'] == "RUSH SR-1"].index[0]
+# Adding a text box for RUSH SR
+rush_sr1_index = vehicle_df_sorted[vehicle_df_sorted['Vehicle'] == "RUSH SR"].index[0]
 rush_sr1_ptm_price = vehicle_df_sorted.loc[rush_sr1_index, 'PTM to Price']
 
 bbox_props = dict(boxstyle="round,pad=0.3", edgecolor='green', facecolor='white', alpha=0.8)
-ax.text(rush_sr1_index, rush_sr1_ptm_price, "RUSH SR-1\nHighest Performance for Price", ha="center", va="bottom", size=12, bbox=bbox_props, color='green')
+ax.text(rush_sr1_index, rush_sr1_ptm_price, "RUSH SR\nHighest Performance for Price", ha="center", va="bottom", size=12, bbox=bbox_props, color='green')
 
 plt.title('PTM to Price Ratio (hp/ton/USD) for Various Vehicles')
 plt.xticks(rotation=45, ha='right')
