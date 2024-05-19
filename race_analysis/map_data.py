@@ -13,8 +13,9 @@ import pint
 
 from race_analysis.column_names import COL_LATITUDE, COL_LONGITUDE
 from race_analysis.df_utils import slice_into_df
-from race_analysis.laps_data import get_lap_indices, get_start_end_laps
+from race_analysis.laps_data import get_lap_indices, get_usable_lap_nums
 from race_analysis.plot_data import save_plot, save_or_show_plot
+from race_analysis.utils import get_filename
 
 
 class GoogleCustomTiles(cimgt.GoogleTiles):
@@ -285,8 +286,7 @@ def plot_map_every_lap(
         data_units: str | pint.Unit,
         colorbar_label: str,
         data_filepath: str,
-        start_lap_num: Optional[int] = None,
-        end_lap_num: Optional[int] = None,
+        usable_laps: Optional[list[int]] = None,
         save_plots: bool = True,
         show_plots: bool = False,
     ) -> None:
@@ -308,14 +308,10 @@ def plot_map_every_lap(
         Label for the colorbar indicating the data units.
     data_filepath : str
         File path to save the plots.
-    start_lap_num : int, optional
-        Starting lap number for which the data should be plotted.
-        If not provided, the first lap number in the DataFrame will be
-        used.
-    end_lap_num : int, optional
-        Ending lap number for which the data should be plotted.  If
-        not provided, the last lap number in the DataFrame will be
-        used.
+    usable_laps : list[int], optional
+        List of usable laps for which the data should be plotted.  If
+        not provided, the default usable laps defined in
+        `lap_times.json` will be used.  By default None.
     save_plots : bool, optional (default True)
         Boolean indicating whether or not the generated plot should be
         saved as a file.  If True, the plot will be saved.  If False,
@@ -336,8 +332,8 @@ def plot_map_every_lap(
     --------
     plot_map : Plot a map with data points overlaid using specified
                map tiles.
-    get_start_end_laps : Function to get the start and end lap numbers
-                         from the DataFrame.
+    get_usable_laps : Function to get the usable lap numbers from the
+                      DataFrame.
 
     Notes
     -----
@@ -358,14 +354,12 @@ def plot_map_every_lap(
     """
     save_or_show_plot(save_plots=save_plots, show_plots=show_plots)
 
-    default_start_lap_num, default_end_lap_num = get_start_end_laps(df)
+    if usable_laps is None:
+        usable_laps = get_usable_lap_nums(
+            dataset_filename=get_filename(data_filepath)
+        )
 
-    if start_lap_num is None:
-        start_lap_num = default_start_lap_num
-    if end_lap_num is None:
-        end_lap_num = default_end_lap_num
-
-    for lap_num in range(start_lap_num, end_lap_num + 1):
+    for lap_num in usable_laps:
         plot_map(
             df=df,
             data_to_plot=data_to_plot,
