@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pint
 
-from .column_names import COL_LATITUDE, COL_LONGITUDE
-from .df_utils import slice_into_df
-from .laps_data import get_lap_indices, get_usable_lap_nums
-from .plot_data import save_plot, save_or_show_plot
-from .utils import get_filename
+from race_analysis.column_names import COL_LATITUDE, COL_LONGITUDE
+from race_analysis.df_utils import slice_into_df
+from race_analysis.laps_data import get_lap_indices, get_usable_lap_nums
+from race_analysis.plot_data import save_plot, save_or_show_plot
+from race_analysis.utils import get_filename
 
 
 class GoogleCustomTiles(cimgt.GoogleTiles):

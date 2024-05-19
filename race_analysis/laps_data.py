@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
-from .column_names import COL_LATITUDE, COL_LONGITUDE
+from .column_names import COL_LAP_NUM, COL_LATITUDE, COL_LONGITUDE
 from .constants import DATA_DIRECTORY, LAP_TIMES_FILEPATH
 from .df_utils import strip_df_of_units
 from .time_utils import convert_time_list_to_seconds
@@ -70,8 +70,6 @@ LAP_JSON_DATA = _initialize_lap_data_from_json()
 
 def get_lap_indices(
         df: pd.DataFrame,
-        start_lap: Optional[int] = None,
-        end_lap: Optional[int] = None,
     ) -> dict[int: tuple[int, int]]:
     """
     Retrieve the start and end indices for given laps.
@@ -84,14 +82,6 @@ def get_lap_indices(
     df : pd.DataFrame
         The DataFrame containing race data, with at least a column
         named 'Lap Number'.
-    start_lap : Optional[int], default=None
-        The starting lap number for which to find the indices.  By
-        default, the second lap will be used as the starting lap if
-        `start_lap` is not provided.
-    end_lap : Optional[int], default=None
-        The ending lap number for which to find the indices.  By
-        default, the second-to-last lap will be used as the ending lap
-        if `end_lap` is not provided.
 
     Returns
     -------
@@ -103,48 +93,28 @@ def get_lap_indices(
     Notes
     -----
     This function assumes that the DataFrame has a column named
-    'Lap Number' and that the laps are sequentially indexed.  If lap
-    numbers are not provided, the second lap and second-to-last lap
-    are assumed to be the start/end lap respectively (typically the
-    first and laps have messy data, so by default they are excluded).
+    'Lap Number' and that the laps are sequentially indexed.
+    Typically the first and laps have messy data, so by default they
+    are excluded.
 
     Examples
     --------
-    >>> data = {
-    ...     'Lap Number': [1, 1, 2, 2, 3, 3],
-    ...     'Speed': [100, 105, 98, 102, 97, 99]
-    ... }
-    >>> df = pd.DataFrame(data)
-    >>> get_lap_indices(df, 1, 2)
-    {1: (0, 1), 2: (2, 3)}
-
-    >>> data = {
-    ...     'Lap Number': [1, 1, 2, 2, 3, 3, 4, 4],
-    ...     'Speed': [100, 105, 98, 102, 97, 99, 96, 101]
-    ... }
-    >>> df = pd.DataFrame(data)
-    >>> get_lap_indices(df, 2, 3)
-    {2: (2, 3), 3: (4, 5)}
-
     >>> data = {
     ...     'Lap Number': [1, 1, 2, 2, 3, 3, 4, 4],
     ...     'Speed': [100, 105, 98, 102, 97, 99, 96, 101]
     ... }
     >>> df = pd.DataFrame(data)
     >>> get_lap_indices(df)
-    {2: (2, 3), 3: (4, 5)}
+    {1: (0, 1), 2: (2, 3), 3: (4, 5), 4: (5, 6)}
     """
-    lap_num_column = 'Lap Number'
     lap_indices: dict[int, list[int, int]] = {}
 
-    if start_lap is None:
-        start_lap = 2
-    if end_lap is None:
-        end_lap = int((df[lap_num_column].iloc[-1] - 1).magnitude)
+    start_lap = int(min(df[COL_LAP_NUM]).magnitude)
+    end_lap = int(max(df[COL_LAP_NUM]).magnitude)
 
     for lap_number in range(int(start_lap), int(end_lap) + 1):
-        lap_start_index = int(df.loc[df[lap_num_column] == lap_number].index[0])
-        lap_end_index = int(df.loc[df[lap_num_column] == lap_number].index[-1])
+        lap_start_index = int(df.loc[df[COL_LAP_NUM] == lap_number].index[0])
+        lap_end_index = int(df.loc[df[COL_LAP_NUM] == lap_number].index[-1])
         lap_indices[lap_number] = (lap_start_index, lap_end_index)
 
     return lap_indices
@@ -218,6 +188,7 @@ def get_usable_lap_nums(
     else:
         lap_data = LAP_JSON_DATA
 
+    dataset_filename = get_filename(dataset_filename)
     skip_laps = set(lap_data[dataset_filename]['skip_laps'])
     usable_lap_nums = []
 

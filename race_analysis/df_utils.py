@@ -9,7 +9,7 @@ units-handling, and manipulating data within the DataFrames.
 from typing import Optional
 import pandas as pd
 
-from .units import Q_
+from race_analysis.units import Q_
 
 
 def convert_series_to_magnitude(
