@@ -49,4 +49,6 @@ DATA_DIRECTORY = 'data/formatted'
 """Directory containing all of the parseable data"""
 PLOTS_DIRECTORY = 'plots'
 """Directory containing all of the plots"""
+LAP_TIMES_FILEPATH = 'data/lap_times.json'
+"""File containing lap time data for each data-file in the data directory"""
 #####################

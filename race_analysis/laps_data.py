@@ -11,12 +11,61 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
-from race_analysis.constants import DATA_DIRECTORY
-
 from .column_names import COL_LATITUDE, COL_LONGITUDE
+from .constants import DATA_DIRECTORY, LAP_TIMES_FILEPATH
 from .df_utils import strip_df_of_units
 from .time_utils import convert_time_list_to_seconds
 from .utils import get_filename, get_files_with_extension
+
+LAP_JSON_DATA = None
+"""Parsed data from the lap_times.json file"""
+
+def _initialize_lap_data_from_json(
+        lap_times_json_filepath: str = LAP_TIMES_FILEPATH,
+    ) -> dict:
+    """
+    Initialize lap data from a JSON file.
+
+    This function reads lap data from the specified JSON file,
+    converts the lap times to seconds, and returns the processed data.
+    If the global variable `LAP_JSON_DATA` is already initialized and
+    the default file path is used, it returns the cached data.
+
+    Parameters
+    ----------
+    lap_times_json_filepath : str, optional
+        The filepath to the JSON file containing lap times data.
+        Defaults to LAP_TIMES_FILEPATH.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the lap data with converted lap times.
+
+    Examples
+    --------
+    >>> _initialize_lap_data_from_json("path/to/lap_times.json")
+    {'dataset1': {'lap_times': [120.5, 132.3, ...], ...}, ...}
+
+    >>> _initialize_lap_data_from_json()
+    {'dataset1': {'lap_times': [120.5, 132.3, ...], ...}, ...}
+    """
+    global LAP_JSON_DATA
+    if LAP_JSON_DATA is not None and lap_times_json_filepath == LAP_TIMES_FILEPATH:
+        return LAP_JSON_DATA
+
+    with open(lap_times_json_filepath) as lap_times_file:
+        all_lap_data: dict = json.load(lap_times_file)
+
+    for dataset_filename, lap_data in all_lap_data.items():
+        lap_data['lap_times'] = convert_time_list_to_seconds(lap_data['lap_times'])
+
+    LAP_JSON_DATA = all_lap_data
+    return all_lap_data
+
+
+LAP_JSON_DATA = _initialize_lap_data_from_json()
+"""Parsed data from the lap_times.json file"""
 
 
 def get_lap_indices(
@@ -134,35 +183,118 @@ def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
     return start_lap_num, end_lap_num
 
 
-def get_lap_times_from_json(
-        dataset_name: str,
-        lap_times_filepath: Optional[str] = None,
-    ) -> list[float]:
+def get_usable_lap_nums(
+        dataset_filename: str,
+        lap_times_json_filepath: str = LAP_TIMES_FILEPATH,
+    ) -> list[int]:
     """
-    Retrieve lap times from a JSON file for a specific dataset.
+    Get usable lap numbers from the lap times data.
 
-    This function reads lap times from a JSON file and returns them
-    as a list of floats, representing the times in seconds. The JSON
-    file should contain lap times for various datasets identified by
-    their filenames.
+    For a specified dataset, this function retrieves the lap numbers
+    that are considered usable, based on the data present in the lap
+    times JSON file.  Laps marked as 'skip_laps' are excluded from the
+    returned list.
 
     Parameters
     ----------
-    dataset_name : str
-        The name of the dataset to retrieve lap times for.
-    lap_times_filepath : Optional[str], default=None
-        The path to the JSON file containing lap times. If not
-        provided, defaults to 'data/lap_times.json'.
+    dataset_filename : str
+        The name of the dataset to retrieve usable lap numbers for.
+    lap_times_json_filepath : str, optional
+        The filepath to the JSON file containing lap times data.
+        Defaults to LAP_TIMES_FILEPATH.
 
     Returns
     -------
-    list of float
-        A list of lap times in seconds for the specified dataset.
+    list[int]
+        A list of usable lap numbers for the specified dataset.
 
-    Raises
-    ------
-    NameError
-        If the dataset name is not found in the JSON file.
+    Examples
+    --------
+    >>> get_usable_lap_nums("dataset1.json")
+    [1, 2, 3, 5, 6, ...]
+    """
+    if lap_times_json_filepath != LAP_TIMES_FILEPATH:
+        lap_data = _initialize_lap_data_from_json(lap_times_json_filepath)
+    else:
+        lap_data = LAP_JSON_DATA
+
+    skip_laps = set(lap_data[dataset_filename]['skip_laps'])
+    usable_lap_nums = []
+
+    for lap_num in range(lap_data[dataset_filename]['first_lap'], lap_data[dataset_filename]['last_lap'] + 1):
+        if lap_num not in skip_laps:
+            usable_lap_nums.append(lap_num)
+
+    return usable_lap_nums
+
+
+def get_all_usable_lap_nums(
+        lap_times_json_filepath: str = LAP_TIMES_FILEPATH,
+    ) -> dict[str, list[int]]:
+    """
+    Get all usable lap numbers from the lap times data for all
+    datasets.
+
+    This function retrieves the usable lap numbers for all datasets
+    present in the lap times JSON file.  It uses the
+    `get_usable_lap_nums` function to filter out laps marked as
+    `skip_laps` for each dataset.
+
+    Parameters
+    ----------
+    lap_times_json_filepath : str, optional
+        The filepath to the JSON file containing lap times data.
+        Defaults to LAP_TIMES_FILEPATH.
+
+    Returns
+    -------
+    dict[str, list[int]]
+        A dictionary where keys are dataset filenames and values are
+        lists of usable lap numbers for each dataset.
+
+    Examples
+    --------
+    >>> get_all_usable_lap_nums()
+    {'dataset1.json': [1, 2, 3, 5, 6, ...],
+     'dataset2.json': [1, 2, 4, 6, 7, ...]}
+    """
+    if lap_times_json_filepath != LAP_TIMES_FILEPATH:
+        lap_data = _initialize_lap_data_from_json(lap_times_json_filepath)
+    else:
+        lap_data = LAP_JSON_DATA
+
+    return {dataset_file: get_usable_lap_nums(lap_data[dataset_file]) for dataset_file in lap_data}
+
+
+def get_lap_times(
+        dataset_filename: Optional[str] = None,
+        lap_times_json_filepath: str = LAP_TIMES_FILEPATH,
+    ) -> dict[str, list[int]] | list[int]:
+    """
+    Retrieve lap times from the lap times data.
+
+    This function retrieves lap times for a specified dataset or all
+    datasets, converting the lap times to seconds.  It reads the lap
+    data from the specified JSON file if a custom path is provided,
+    otherwise it uses preloaded data.
+
+    Parameters
+    ----------
+    dataset_filename : str, optional
+        The name of the dataset to retrieve lap times for.  If None,
+        the function returns lap times for all datasets.  Defaults to
+        None.
+    lap_times_json_filepath : str, optional
+        The filepath to the JSON file containing lap times data.
+        Defaults to LAP_TIMES_FILEPATH.
+
+    Returns
+    -------
+    dict of str to list of int or list of int
+        A dictionary where the keys are dataset filenames and the
+        values are lists of lap times in seconds, if
+        `dataset_filename` is None.  Otherwise, a list of lap times
+        in seconds for the specified dataset.
 
     See Also
     --------
@@ -180,30 +312,27 @@ def get_lap_times_from_json(
             "dataset_02_filename": ["11.22", "12.34", "13.45"]
         }
 
-
     Examples
     --------
-    Retrieve lap times for a given dataset from the default JSON file:
+    >>> get_lap_times("dataset1.json")
+    [120.5, 132.3, 145.6, ...]
 
-    >>> get_lap_times_from_json('dataset_01')
-    [12.34, 13.56, 14.78]
-
-    Retrieve lap times from a specified JSON file:
-
-    >>> get_lap_times_from_json('dataset_01', 'path/to/lap_times.json')
-    [11.22, 12.34, 13.45]
+    >>> get_lap_times()
+    {'dataset1.json': [120.5, 132.3, 145.6, ...],
+     'dataset2.json': [118.2, 130.4, 140.8, ...],
+     ...}
     """
-    data_filename = get_filename(dataset_name)
+    if lap_times_json_filepath != LAP_TIMES_FILEPATH:
+        lap_data = _initialize_lap_data_from_json(lap_times_json_filepath)
+    else:
+        lap_data = LAP_JSON_DATA
 
-    lap_times_filepath = 'data/lap_times.json' if lap_times_filepath is None else lap_times_filepath
+    if dataset_filename is None:
+        return {dataset_file: convert_time_list_to_seconds(lap_data[dataset_file]['lap_times']) for dataset_file in lap_data}
 
-    with open(lap_times_filepath) as lap_times_file:
-        all_lap_times = json.load(lap_times_file)
+    dataset_filename = get_filename(dataset_filename)
 
-    if data_filename not in all_lap_times:
-        raise NameError(f'"{data_filename}" was not in the lap_times.json file')
-
-    return convert_time_list_to_seconds(all_lap_times[data_filename]["lap_times"])
+    return convert_time_list_to_seconds(lap_data[dataset_filename]['lap_times'])
 
 
 def add_lap_numbers_to_csv(
@@ -236,8 +365,8 @@ def add_lap_numbers_to_csv(
 
     See Also
     --------
-    get_lap_times_from_json : Retrieve lap times from a JSON file for
-                              a specific dataset.
+    get_lap_times : Retrieve lap times from a JSON file for a specific
+                    dataset.
 
     Examples
     --------
@@ -254,7 +383,7 @@ def add_lap_numbers_to_csv(
     >>> add_lap_numbers_to_csv('race_data.csv')
     """
     if lap_times is None:
-        lap_times = get_lap_times_from_json(get_filename(csv_to_modify))
+        lap_times = get_lap_times(dataset_filename=get_filename(csv_to_modify))
 
     race_data = pd.read_csv(
         filepath_or_buffer=csv_to_modify,
