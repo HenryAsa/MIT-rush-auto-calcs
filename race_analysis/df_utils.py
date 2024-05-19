@@ -445,7 +445,7 @@ def columns_during_state(
     else:
         new_df = df[data_columns].where(is_on)
 
-    new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name.casefold()}' for column_name in new_df.columns]
+    new_df.columns = [f'{column_name}{" " if append_to_column_name != "" else ""}{append_to_column_name.strip(" ")}' for column_name in new_df.columns]
 
     if len(new_df.columns) == 1:
         return copy_attrs_to_new_df(original_df=df, new_df=new_df[new_df.columns[0]])
