@@ -13,7 +13,7 @@ functions are useful for file system navigation and manipulation.
 import os
 from typing import Iterable, Optional
 
-from race_analysis.constants import DATA_DIRECTORY
+from .constants import DATA_DIRECTORY
 
 
 def get_data_files(data_directory: Optional[str] = DATA_DIRECTORY):

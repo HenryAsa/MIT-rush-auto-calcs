@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pint
 
-from race_analysis.column_names import COL_LATITUDE, COL_LONGITUDE
-from race_analysis.df_utils import slice_into_df
-from race_analysis.laps_data import get_lap_indices, get_usable_lap_nums
-from race_analysis.plot_data import save_plot, save_or_show_plot
-from race_analysis.utils import get_filename
+from .column_names import COL_LATITUDE, COL_LONGITUDE
+from .df_utils import slice_into_df
+from .laps_data import get_lap_indices, get_usable_lap_nums
+from .plot_data import save_plot, save_or_show_plot
+from .utils import get_filename
 
 
 class GoogleCustomTiles(cimgt.GoogleTiles):
@@ -253,31 +253,28 @@ def plot_map(
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
 
-    for map in MapType:
-        tile_source = map.value
+    # Create a plot with an appropriate projection
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.crs})
+    ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
-        # Create a plot with an appropriate projection
-        fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.crs})
-        ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
+    # Add the tile layer
+    zoom_level = 18
+    ax.add_image(tile_source, zoom_level)
 
-        # Add the tile layer
-        zoom_level = 18
-        ax.add_image(tile_source, zoom_level)
+    for _, row in new_df.iterrows():
+        color = cmap(norm(row[data_name]))
+        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
 
-        for _, row in new_df.iterrows():
-            color = cmap(norm(row[data_name]))
-            ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
+    plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
+    plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
+    plt.tight_layout()
 
-        plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
-        plt.title(f'Vehicle {data_name} on {map.name} - Lap {lap_num}')
-        plt.tight_layout()
+    if save_plots:
+        save_plot(data_filepath, name=f'{tile_source.name} {ax.get_title()}', lap_num=lap_num)
+    if show_plots:
+        plt.show()
 
-        if save_plots:
-            save_plot(data_filepath, name=f'{map.name} {ax.get_title()}', lap_num=lap_num)
-        if show_plots:
-            plt.show()
-
-        plt.close()
+    plt.close()
 
 
 def plot_map_every_lap(
@@ -286,6 +283,7 @@ def plot_map_every_lap(
         data_units: str | pint.Unit,
         colorbar_label: str,
         data_filepath: str,
+        tile_source: Optional[MapType] = MapType.OSM,
         usable_laps: Optional[list[int]] = None,
         save_plots: bool = True,
         show_plots: bool = False,
@@ -308,6 +306,8 @@ def plot_map_every_lap(
         Label for the colorbar indicating the data units.
     data_filepath : str
         File path to save the plots.
+    tile_source : MapType, optional
+        The map tile source to use. Default is MapType.OSM.
     usable_laps : list[int], optional
         List of usable laps for which the data should be plotted.  If
         not provided, the default usable laps defined in
@@ -334,6 +334,8 @@ def plot_map_every_lap(
                map tiles.
     get_usable_laps : Function to get the usable lap numbers from the
                       DataFrame.
+    MapType : Enum for different map types including Google Maps and
+              OpenStreetMap.
 
     Notes
     -----
@@ -367,6 +369,7 @@ def plot_map_every_lap(
             lap_num=lap_num,
             colorbar_label=colorbar_label,
             data_filepath=data_filepath,
+            tile_source=tile_source,
             save_plots=save_plots,
             show_plots=show_plots
         )
