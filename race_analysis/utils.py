@@ -11,7 +11,7 @@ functions are useful for file system navigation and manipulation.
 """
 
 import os
-from typing import Optional
+from typing import Iterable, Optional
 
 from race_analysis.constants import DATA_DIRECTORY
 
@@ -155,3 +155,148 @@ def get_filename(filepath: str) -> str:
     'file.txt'
     """
     return os.path.basename(filepath)
+
+
+def filter_dict_keeping_specified_keys(
+        dict_to_filter: dict,
+        keys_to_keep: Iterable,
+    ) -> dict:
+    """
+    Filter a dictionary to keep only specified keys.  Does not mutate
+    the original dictionary, and instead returns a new dictionary.
+
+    This function filters a given dictionary, including nested
+    dictionaries, to retain only the keys specified in the
+    `keys_to_keep` iterable.
+
+    Parameters
+    ----------
+    dict_to_filter : dict
+        The dictionary to be filtered.
+    keys_to_keep : Iterable
+        An iterable containing the keys to be retained in the
+        dictionary.
+
+    Returns
+    -------
+    dict
+        A dictionary containing only the specified keys from the
+        original dictionary, preserving the structure of nested
+        dictionaries.
+
+    Notes
+    -----
+    This function does not mutate the original dictionary.  It creates
+    and returns a new dictionary containing only the specified keys.
+
+    Examples
+    --------
+    Basic usage:
+
+    >>> d = {'a': 1, 'b': 2, 'c': 3}
+    >>> keys = ['a', 'c']
+    >>> filter_dict_keeping_specified_keys(d, keys)
+    {'a': 1, 'c': 3}
+
+    Nested dictionaries:
+
+    >>> d = {'a': 1, 'b': {'ba': 21, 'bb': 22}, 'c': 3}
+    >>> keys = ['a', 'b', 'ba']
+    >>> filter_dict_keeping_specified_keys(d, keys)
+    {'a': 1, 'b': {'ba': 21}}
+
+    Filtering with no keys retained:
+
+    >>> d = {'a': 1, 'b': 2, 'c': 3}
+    >>> keys = []
+    >>> filter_dict_keeping_specified_keys(d, keys)
+    {}
+    """
+    keys_to_keep = set(keys_to_keep)
+
+    def filter_dict(dict_to_filter):
+        if isinstance(dict_to_filter, dict):
+            return {
+                key: filter_dict(value)
+                for key, value in dict_to_filter.items()
+                if key in keys_to_keep
+            }
+        return dict_to_filter
+
+    return {
+        key: filter_dict(value)
+        for key, value in dict_to_filter.items()
+        if key in keys_to_keep
+    }
+
+
+def filter_dict_removing_specified_keys(
+        dict_to_filter: dict,
+        keys_to_delete: Iterable
+    ) -> dict:
+    """
+    Filter a dictionary to remove specified keys.  Does not mutate the
+    original dictionary, and instead returns a new dictionary.
+
+    This function filters a given dictionary, including nested
+    dictionaries, to remove the keys specified in the `keys_to_delete`
+    iterable.
+
+    Parameters
+    ----------
+    dict_to_filter : dict
+        The dictionary to be filtered.
+    keys_to_delete : Iterable
+        An iterable containing the keys to be removed from the
+        dictionary.
+
+    Returns
+    -------
+    dict
+        A dictionary excluding the specified keys from the original
+        dictionary, preserving the structure of nested dictionaries.
+
+    Notes
+    -----
+    This function does not mutate the original dictionary.  It creates
+    and returns a new dictionary excluding the specified keys.
+
+    Examples
+    --------
+    Basic usage:
+
+    >>> d = {'a': 1, 'b': 2, 'c': 3}
+    >>> keys = ['b']
+    >>> filter_dict_removing_specified_keys(d, keys)
+    {'a': 1, 'c': 3}
+
+    Nested dictionaries:
+
+    >>> d = {'a': 1, 'b': {'ba': 21, 'bb': 22}, 'c': 3}
+    >>> keys = ['b', 'bb']
+    >>> filter_dict_removing_specified_keys(d, keys)
+    {'a': 1, 'b': {'ba': 21}, 'c': 3}
+
+    Filtering with all keys deleted:
+
+    >>> d = {'a': 1, 'b': 2, 'c': 3}
+    >>> keys = ['a', 'b', 'c']
+    >>> filter_dict_removing_specified_keys(d, keys)
+    {}
+    """
+    keys_to_delete = set(keys_to_delete)
+
+    def filter_dict(dict_to_filter):
+        if isinstance(dict_to_filter, dict):
+            return {
+                key: filter_dict(value)
+                for key, value in dict_to_filter.items()
+                if key not in keys_to_delete
+            }
+        return dict_to_filter
+
+    return {
+        key: filter_dict(value)
+        for key, value in dict_to_filter.items()
+        if key not in keys_to_delete
+    }
