@@ -160,7 +160,7 @@ def plot_map(
         lap_num: int,
         colorbar_label: str,
         data_filepath: str,
-        tile_source: Optional[MapType] = MapType.OSM,
+        tile_source: MapType = MapType.OSM,
         save_plots: bool = True,
         show_plots: bool = False,
     ) -> None:
@@ -186,7 +186,7 @@ def plot_map(
     data_filepath : str
         File path to save the plot.
     tile_source : MapType, optional
-        The map tile source to use. Default is MapType.OSM.
+        The map tile source to use.  Default is MapType.OSM.
     save_plot : bool, optional (default True)
         Boolean indicating whether or not the generated plot should be
         saved as a file.  If True, the plot will be saved.  If False,
@@ -248,18 +248,18 @@ def plot_map(
         data_name: slice_into_df(data_to_plot, start_lap_index, end_lap_index).pint.m_as(data_units),
     })
 
-    # Normalize the speed values for color mapping
+    # Normalize the values for color mapping
     norm = plt.Normalize(new_df[data_name].min(), new_df[data_name].max())
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
 
     # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.crs})
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.value.crs})
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
     zoom_level = 18
-    ax.add_image(tile_source, zoom_level)
+    ax.add_image(tile_source.value, zoom_level)
 
     for _, row in new_df.iterrows():
         color = cmap(norm(row[data_name]))
@@ -283,7 +283,7 @@ def plot_map_every_lap(
         data_units: str | pint.Unit,
         colorbar_label: str,
         data_filepath: str,
-        tile_source: Optional[MapType] = MapType.OSM,
+        tile_source: MapType = MapType.OSM,
         usable_laps: Optional[list[int]] = None,
         save_plots: bool = True,
         show_plots: bool = False,
@@ -307,7 +307,7 @@ def plot_map_every_lap(
     data_filepath : str
         File path to save the plots.
     tile_source : MapType, optional
-        The map tile source to use. Default is MapType.OSM.
+        The map tile source to use.  Default is MapType.OSM.
     usable_laps : list[int], optional
         List of usable laps for which the data should be plotted.  If
         not provided, the default usable laps defined in
