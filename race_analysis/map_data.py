@@ -249,7 +249,8 @@ def plot_map(
     })
 
     # Normalize the values for color mapping
-    norm = plt.Normalize(new_df[data_name].min(), new_df[data_name].max())
+    min_val, max_val = new_df[data_name].min(), new_df[data_name].max()
+    norm = plt.Normalize(vmin=min_val, vmax=max_val)
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
 

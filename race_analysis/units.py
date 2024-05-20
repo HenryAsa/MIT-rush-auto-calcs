@@ -13,7 +13,7 @@ u: pint.UnitRegistry = pint.UnitRegistry()
 Pint UnitRegistry object containing all of the units for the analysis
 """
 
-u.define('percent = pct = dimensionless / 100')
+u.define('percent = pct = dimensionless/100')
 u.define('gear = dimensionless')
 
 Q_: pint.Quantity = u.Quantity
