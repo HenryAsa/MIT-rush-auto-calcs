@@ -7,7 +7,9 @@ from enum import Enum
 from typing import Optional
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pint
 
@@ -163,6 +165,7 @@ def plot_map(
         tile_source: MapType = MapType.OSM,
         save_plots: bool = True,
         show_plots: bool = False,
+        set_custom_colors: Optional[dict[float, str]] = None,
     ) -> None:
     """
     Plot a map with data points overlaid using specified map tiles.
@@ -196,6 +199,10 @@ def plot_map(
         displayed while running.  If False, the plot will not be
         displayed.  If True, the plot will be displayed.  By default
         False.
+    set_custom_colors : dict[float, str], optional
+        Optional dictionary mapping values in the dataset to specific
+        colors that should be plotted for those specific values.  For
+        example, ``{0: 'red'}`` would plot all 0 values as red.
 
     Returns
     -------
@@ -249,7 +256,13 @@ def plot_map(
     })
 
     # Normalize the values for color mapping
-    min_val, max_val = new_df[data_name].min(), new_df[data_name].max()
+    if set_custom_colors is not None:
+        min_val = min(list(set_custom_colors.keys()), new_df[data_name].min())
+        max_val = max(list(set_custom_colors.keys()), new_df[data_name].max())
+    else:
+        min_val = new_df[data_name].min()
+        max_val = new_df[data_name].max()
+
     norm = plt.Normalize(vmin=min_val, vmax=max_val)
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
@@ -263,10 +276,30 @@ def plot_map(
     ax.add_image(tile_source.value, zoom_level)
 
     for _, row in new_df.iterrows():
-        color = cmap(norm(row[data_name]))
+        row_value = row[data_name]
+        if set_custom_colors is not None and row_value in set_custom_colors:
+            color = set_custom_colors[row_value]
+        else:
+            color = cmap(norm(row_value))
         ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
 
-    plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax, orientation='vertical', label=colorbar_label)
+    # Custom colormap to handle values less than zero in red
+    if set_custom_colors is not None:
+        custom_colors = cmap(np.linspace(0, 1, cmap.N))
+        for custom_value, value_color in set_custom_colors.items():
+            custom_value_index = np.searchsorted(np.linspace(min_val, max_val, cmap.N), custom_value)
+            ## MAKE ALL VALUES LESS THAN ZERO THE ZERO-COLOR
+            custom_colors = np.vstack([[mcolors.to_rgba(value_color)] * custom_value_index + list(custom_colors[custom_value_index:])])
+            ## INSERTS ZERO-COLOR AT CORRECT LOCATION
+            # custom_colors = np.vstack([custom_colors[:custom_value_index], [mcolors.to_rgba(value_color)], custom_colors[custom_value_index:]])
+
+        custom_cmap = mcolors.ListedColormap(custom_colors)
+    else:
+        custom_cmap = cmap
+
+    # Create the colorbar
+    colorbar = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=custom_cmap), ax=ax, orientation='vertical', label=colorbar_label)
+
     plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
     plt.tight_layout()
 
@@ -288,6 +321,7 @@ def plot_map_every_lap(
         usable_laps: Optional[list[int]] = None,
         save_plots: bool = True,
         show_plots: bool = False,
+        set_custom_colors: Optional[dict[float, str]] = None,
     ) -> None:
     """
     Plot maps for each lap with data points overlaid using specified map tiles.
@@ -322,6 +356,10 @@ def plot_map_every_lap(
         displayed while running.  If False, the plot will not be
         displayed.  If True, the plot will be displayed.  By default
         False.
+    set_custom_colors : dict[float, str], optional
+        Optional dictionary mapping values in the dataset to specific
+        colors that should be plotted for those specific values.  For
+        example, ``{0: 'red'}`` would plot all 0 values as red.
 
     Returns
     -------
@@ -372,5 +410,6 @@ def plot_map_every_lap(
             data_filepath=data_filepath,
             tile_source=tile_source,
             save_plots=save_plots,
-            show_plots=show_plots
+            show_plots=show_plots,
+            set_custom_colors=set_custom_colors,
         )
