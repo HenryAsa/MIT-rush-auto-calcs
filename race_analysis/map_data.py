@@ -31,8 +31,8 @@ class GoogleCustomTiles(cimgt.GoogleTiles):
     Parameters
     ----------
     layer_type : str, optional
-        The type of Google Maps layer to use. Must be one of
-        {'m', 's', 'p', 'y'}. Default is 'm'.
+        The type of Google Maps layer to use.  Must be one of
+        {'m', 's', 'p', 'y'}.  Default is 'm'.
 
     Notes
     -----
@@ -54,8 +54,8 @@ class GoogleCustomTiles(cimgt.GoogleTiles):
         Parameters
         ----------
         layer_type : str, optional
-            The type of Google Maps layer to use. Must be one of
-            {'m', 's', 'p', 'y'}. Default is 'm'.
+            The type of Google Maps layer to use.  Must be one of
+            {'m', 's', 'p', 'y'}.  Default is 'm'.
         """
         assert layer_type in {'m', 's', 'p', 'y'}
         self.layer_type = layer_type
@@ -207,7 +207,7 @@ def plot_map(
     Returns
     -------
     None
-        This function does not return any value. It saves the plot to
+        This function does not return any value.  It saves the plot to
         the specified file path and displays it.
 
     See Also
@@ -364,7 +364,7 @@ def plot_map_every_lap(
     Returns
     -------
     None
-        This function does not return any value. It saves the plots
+        This function does not return any value.  It saves the plots
         to the specified file path and displays them.
 
     See Also

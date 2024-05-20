@@ -127,7 +127,7 @@ def magnitude_of_df_columns(
 
     Notes
     -----
-    This function does not modify the original DataFrame. It returns
+    This function does not modify the original DataFrame.  It returns
     a new DataFrame or Series with the converted values of the
     specified columns.
 

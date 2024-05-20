@@ -27,7 +27,7 @@ def get_data_files(data_directory: Optional[str] = DATA_DIRECTORY):
     Parameters
     ----------
     data_directory : str, optional
-        The directory to search for CSV files. If not provided,
+        The directory to search for CSV files.  If not provided,
         defaults to `DATA_DIRECTORY`.
 
     Returns

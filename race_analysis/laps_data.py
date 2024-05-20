@@ -130,7 +130,7 @@ def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
     Parameters
     ----------
     df : pd.DataFrame
-        DataFrame containing lap information. It should have a column
+        DataFrame containing lap information.  It should have a column
         named 'Lap Number'.
 
     Returns
@@ -144,7 +144,7 @@ def get_start_end_laps(df: pd.DataFrame) -> tuple[int, int]:
     Notes
     -----
     The function assumes that the 'Lap Number' column exists and
-    contains numeric values. The end lap number is calculated by
+    contains numeric values.  The end lap number is calculated by
     subtracting 1 from the last value in the 'Lap Number' column.
     """
     start_lap_num = 2
@@ -322,10 +322,10 @@ def add_lap_numbers_to_csv(
     csv_to_modify : str
         The path to the CSV file to be modified.
     new_csv_filename : Optional[str], optional
-        The filename for the new CSV file with lap numbers. If not
+        The filename for the new CSV file with lap numbers.  If not
         provided, the original CSV file is overwritten.
     lap_times : Optional[list[float]], optional
-        A list of lap times. If not provided, lap times are fetched
+        A list of lap times.  If not provided, lap times are fetched
         from a JSON file.
 
     Returns

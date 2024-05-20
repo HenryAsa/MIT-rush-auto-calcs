@@ -182,7 +182,7 @@ def save_or_show_plot(
     Traceback (most recent call last):
         ...
     ValueError: This function effectively does nothing since both
-    `save_plots` and `show_plots` are set to False. At least one of
+    `save_plots` and `show_plots` are set to False.  At least one of
     these options must be True.
     """
     if not save_plots and not show_plots:

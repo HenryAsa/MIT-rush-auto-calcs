@@ -106,7 +106,7 @@ def load_race(
     -----
     The function sets the `attrs` attribute of the returned DataFrame
     with metadata containing the file path and file name of the
-    loaded CSV file. This can be useful for tracking the data source.
+    loaded CSV file.  This can be useful for tracking the data source.
 
     Examples
     --------
