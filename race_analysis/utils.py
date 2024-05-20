@@ -124,7 +124,6 @@ def get_folder_from_filepath(filepath: str) -> str:
 
     >>> get_folder_from_filepath('C:\\Users\\file.txt')
     'C:\\Users'
-
     """
     return os.path.dirname(filepath)
 
@@ -153,6 +152,12 @@ def get_filename(filepath: str) -> str:
 
     >>> get_filename('C:\\Users\\Documents\\file.txt')
     'file.txt'
+
+    Retrieving a filepath that is already represented in the base
+    directory.
+
+    >>> get_filename('mango.txt')
+    'mango.txt'
     """
     return os.path.basename(filepath)
 
