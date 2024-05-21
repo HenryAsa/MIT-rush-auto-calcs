@@ -11,6 +11,7 @@ u.define('euro = [currency] = euros = EUR = 1.09*USD')
 pint_pandas.PintType.ureg = u
 pint_pandas.PintType.ureg.setup_matplotlib()
 
+Q_ = u.Quantity
 
 P_KEY = 'Power'
 M_KEY = 'Mass'
@@ -18,109 +19,109 @@ PRICE = 'Price'
 
 vehicle_specs = {
     "Red Bull Racing RB20 F1": {        # https://www.redbullracing.com/int-en/cars/rb20
-        P_KEY: (1080 * u.hp),
-        M_KEY: (798 * u.kg),
-        PRICE: (15000000 * u.EUR),      # https://www.redbull.com/se-en/theredbulletin/what-does-a-formula-1-car-cost
+        P_KEY: Q_(1080, u.hp),
+        M_KEY: Q_(798, u.kg),
+        PRICE: Q_(15000000, u.EUR),     # https://www.redbull.com/se-en/theredbulletin/what-does-a-formula-1-car-cost
     },
     "RUSH SR": {                        # https://rushautoworks.com/car_post/rush-sr/
-        P_KEY: (145 * u.hp),
-        M_KEY: (513 * u.kg),
-        PRICE: (39875 * u.USD)
+        P_KEY: Q_(145, u.hp),
+        M_KEY: Q_(513, u.kg),
+        PRICE: Q_(39875, u.USD),
     },
     "RUSH SRX (Unreleased)": {          # https://rushautoworks.com/car_post/rush-srx/
-        P_KEY: (230 * u.hp),            # 220 whp (Min) with 30whp on PTP (180 seconds per session)
-        M_KEY: (1195 * u.lb),
-        PRICE: (83675 * u.USD),
+        P_KEY: Q_(230, u.hp),           # 220 whp (Min) with 30whp on PTP (180 seconds per session)
+        M_KEY: Q_(1195, u.lb),
+        PRICE: Q_(83675, u.USD),
     },
     "Bugatti Chiron": {                 # https://en.wikipedia.org/wiki/Bugatti_Chiron
-        P_KEY: (1103 * u.kW),
-        M_KEY: (1996 * u.kg),
-        PRICE: (3300000 * u.USD),
+        P_KEY: Q_(1103, u.kW),
+        M_KEY: Q_(1996, u.kg),
+        PRICE: Q_(3300000, u.USD),
     },
     "Porsche 911 Turbo": {              # https://www.porsche.com/usa/models/911/911-turbo-models/911-turbo/
-        P_KEY: (572 * u.hp),
-        M_KEY: (3635 * u.lb),
-        PRICE: (197200 * u.USD),
+        P_KEY: Q_(572, u.hp),
+        M_KEY: Q_(3635, u.lb),
+        PRICE: Q_(197200, u.USD),
     },
     "Porsche 911 Carerra": {            # https://www.porsche.com/usa/models/911/911-models/carrera/
-        P_KEY: (379 * u.hp),
-        M_KEY: (3354 * u.lb),
-        PRICE: (114400 * u.USD),
+        P_KEY: Q_(379, u.hp),
+        M_KEY: Q_(3354, u.lb),
+        PRICE: Q_(114400, u.USD),
     },
     "BMW M3 Competition": {             # https://www.bmwusa.com/vehicles/m-models/m3-sedan/overview.html#performance
-        P_KEY: (503 * u.hp),
-        M_KEY: (3990 * u.lb),
-        PRICE: (76995 * u.USD)
+        P_KEY: Q_(503, u.hp),
+        M_KEY: Q_(3990, u.lb),
+        PRICE: Q_(76995, u.USD)
     },
     "BMW M4 Competition": {             # https://www.bmwusa.com/vehicles/m-series/bmw-4-series-m-models/bmw-m4-coupe.html#technical-highlights
-        P_KEY: (523 * u.hp),
-        M_KEY: (3640 * u.lb),
-        PRICE: (84195 * u.USD)
+        P_KEY: Q_(523, u.hp),
+        M_KEY: Q_(3640, u.lb),
+        PRICE: Q_(84195, u.USD)
     },
     "Corvette 1LT": {                   # https://www.chevrolet.com/shopping/configurator/performance/2024/corvette/corvette/compare?make=chevrolet
-        P_KEY: (490 * u.hp),
-        M_KEY: (3366 * u.lb),
-        PRICE: (69995 * u.USD)
+        P_KEY: Q_(490, u.hp),
+        M_KEY: Q_(3366, u.lb),
+        PRICE: Q_(69995, u.USD)
     },
     "Honda Civic Type R": {             # https://automobiles.honda.com/civic-type-r#
-        P_KEY: (315 * u.hp),
-        M_KEY: (3188 * u.lb),
-        PRICE: (44795 * u.USD),
+        P_KEY: Q_(315, u.hp),
+        M_KEY: Q_(3188, u.lb),
+        PRICE: Q_(44795, u.USD),
     },
     "Lotus Emira" : {                   # https://media.lotuscars.com/en/models/emira.html
-        P_KEY: (360 * u.hp),
-        M_KEY: (1405 * u.kg),
-        PRICE: (99900 * u.USD),
+        P_KEY: Q_(360, u.hp),
+        M_KEY: Q_(1405, u.kg),
+        PRICE: Q_(99900, u.USD),
     },
     "Ferrari 488 GTB": {                # https://www.ferrari.com/en-EN/auto/ferrari-488-gtb
-        P_KEY: (492 * u.kW),
-        M_KEY: (1475 * u.kg),
-        PRICE: (280900 * u.USD),
+        P_KEY: Q_(492, u.kW),
+        M_KEY: Q_(1475, u.kg),
+        PRICE: Q_(280900, u.USD),
     },
     "Audi R8 Coupé V10": {              # https://www.audi-mediacenter.com/en/audi-r8-coupe-v10-performance-quattro-14430
-        P_KEY: (456 * u.kW),
-        M_KEY: (1670 * u.kg),
-        PRICE: (158600 * u.USD),
+        P_KEY: Q_(456, u.kW),
+        M_KEY: Q_(1670, u.kg),
+        PRICE: Q_(158600, u.USD),
     },
     "Mercedes AMG GT 55 Coupe": {       # https://www.mbusa.com/en/vehicles/class/amg-gt-2-door/mercedes-amg-gt-2-door-coupe
-        P_KEY: (469 * u.hp),
-        M_KEY: (4343 * u.lb),
-        PRICE: (134900 * u.USD),
+        P_KEY: Q_(469, u.hp),
+        M_KEY: Q_(4343, u.lb),
+        PRICE: Q_(134900, u.USD),
     },
     "McLaren P1": {                     # https://cars.mclaren.com/us-en/legacy/mclaren-p1/specification
-        P_KEY: (903 * u.hp),
-        M_KEY: (1490 * u.kg),
-        PRICE: (1150000 * u.USD),
+        P_KEY: Q_(903, u.hp),
+        M_KEY: Q_(1490, u.kg),
+        PRICE: Q_(1150000, u.USD),
     },
     "Tesla Model 3 Performance": {      # https://www.tesla.com/model3-performance
-        P_KEY: (510 * u.hp),
-        M_KEY: (4054 * u.lb),
-        PRICE: (54990 * u.USD),
+        P_KEY: Q_(510, u.hp),
+        M_KEY: Q_(4054, u.lb),
+        PRICE: Q_(54990, u.USD),
     },
     "Tesla Model 3 Long Range AWD": {   # https://www.tesla.com/model3
-        P_KEY: (393 * u.hp),
-        M_KEY: (4030 * u.lb),
-        PRICE: (47740 * u.USD),
+        P_KEY: Q_(393, u.hp),
+        M_KEY: Q_(4030, u.lb),
+        PRICE: Q_(47740, u.USD),
     },
     "Tesla Model 3 Rear-Wheel Drive": { # https://www.tesla.com/model3
-        P_KEY: (271 * u.hp),
-        M_KEY: (3891 * u.lb),
-        PRICE: (38990 * u.USD),
+        P_KEY: Q_(271, u.hp),
+        M_KEY: Q_(3891, u.lb),
+        PRICE: Q_(38990, u.USD),
     },
     "McLaren 750s": {                   # https://cars.mclaren.com/us-en/750s
-        P_KEY: (740 * u.hp),
-        M_KEY: (1389 * u.kg),
-        PRICE: (329500 * u.USD),
+        P_KEY: Q_(740, u.hp),
+        M_KEY: Q_(1389, u.kg),
+        PRICE: Q_(329500, u.USD),
     },
     # "": {
-    #     P_KEY: ( * u.hp),
-    #     M_KEY: ( * u.lb),
-    #     PRICE: ( * u.USD),
+    #     P_KEY: Q_( , u.hp),
+    #     M_KEY: Q_( , u.lb),
+    #     PRICE: Q_( , u.USD),
     # },
     # "Mercedes AMG GT 63 Coupe": {   # https://www.mbusa.com/en/vehicles/class/amg-gt-2-door/mercedes-amg-gt-2-door-coupe
-    #     P_KEY: (577 * u.hp),
-    #     M_KEY: (4343 * u.lb),
-    #     PRICE: (175900 * u.USD),
+    #     P_KEY: Q_(577, u.hp),
+    #     M_KEY: Q_(4343, u.lb),
+    #     PRICE: Q_(175900, u.USD),
     # },
 }
 
@@ -137,6 +138,7 @@ data = [
 vehicle_df = pd.DataFrame(data)
 vehicle_df_sorted = vehicle_df.sort_values(by='Power to Mass', ascending=False)
 
+print(vehicle_df_sorted.to_latex(index=False))
 
 print(vehicle_df.to_markdown(index=False))
 
