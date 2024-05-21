@@ -7,6 +7,7 @@ formats.
 """
 
 import os
+import re
 from typing import Iterable, Optional
 
 import pandas as pd
@@ -14,44 +15,46 @@ import pint
 import scipy
 
 from .df_utils import strip_df_of_units
-from .utils import get_folder_from_filepath
+from .utils import extract_text_within_parentheses, get_folder_from_filepath
 
 
 def export_df_to_latex(
         df: pd.DataFrame | pd.Series,
         numeric_format: Optional[dict[str, str]] = None,
         units: Optional[dict[str, str | pint.Unit]] = None,
-        round_amount: int = 2,
+        default_round_amount: int = 2,
     ) -> str:
     """
-    Convert a Pandas DataFrame or Series to a LaTeX table string with
-    optional numeric formatting and unit handling.
+    Export a DataFrame or Series to a LaTeX table with unit handling
+    and formatting.
 
-    This function processes a DataFrame or Series to format its
-    numeric values and append units to column headers, if specified.
-    It then converts the processed DataFrame to a LaTeX table string.
+    This function converts a Pandas DataFrame or Series to a LaTeX
+    table string, applying specified numeric formats and units to
+    columns as needed.  It supports rounding and scientific notation,
+    and can handle Pint units.
 
     Parameters
     ----------
     df : pd.DataFrame or pd.Series
-        The DataFrame or Series to be converted to LaTeX format.
-    numeric_format : dict of str, optional
-        A dictionary specifying the numeric format for columns.  The
-        keys are column names and values are format types, which can
-        be "ROUND" or "SCIENTIFIC".
-    units : dict of str or pint.Unit, optional
-        A dictionary specifying the units for columns.  The keys are
-        column names and values are unit strings or `pint.Unit`
-        objects.
-    round_amount : int, default=2
-        The number of decimal places to round to if rounding is
-        applied.
+        The DataFrame or Series to convert to a LaTeX table.
+    numeric_format : dict of str, str, optional
+        A dictionary specifying the numeric format for each column.
+        Supported formats are ``'ROUND'`` and ``'SCIENTIFIC'``.  Can
+        also use ``'ROUND(NUMBER)'`` or ``'SCIENTIFIC(NUMBER)'`` where
+        ``NUMBER`` is an integer if the client wishes to define
+        custom rounding for a specific column.
+    units : dict of str, str or pint.Unit, optional
+        A dictionary specifying the units for each column.  The keys
+        are column names and the values are the units as strings or
+        Pint Unit objects.
+    default_round_amount : int, optional
+        The default number of decimal places to round to if no
+        specific rounding is provided in numeric_format.  Default is 2.
 
     Returns
     -------
     str
-        A string containing the LaTeX table representation of the
-        DataFrame.
+        A string containing the LaTeX representation of the DataFrame.
 
     See Also
     --------
@@ -65,52 +68,71 @@ def export_df_to_latex(
     >>> from pint_pandas import PintType
     >>> ureg = pint.UnitRegistry()
     >>> df = pd.DataFrame({
-    ...     'Length': [1.23, 2.34, 3.45] * ureg.meter,
-    ...     'Mass': [4.56, 5.67, 6.78] * ureg.kilogram,
-    ...     'Time': [7.89, 8.90, 9.01]
+    ...     'Length': [1.5, 2.5, 3.75] * ureg.meter,
+    ...     'Weight': [50, 60, 75] * ureg.kilogram
     ... })
-    >>> numeric_format = {'Time': 'SCIENTIFIC'}
-    >>> units = {'Length': 'cm', 'Mass': ureg.gram}
-    >>> export_df_to_latex(df, numeric_format=numeric_format, units=units)
-    '\\begin{table*}\\begin{center}\\nLength [centimeter] & Mass [gram] & Time \\\\n123.00 & 4560.00 & $7.89 \\times 10^{0}$ \\\\\n234.00 & 5670.00 & $8.90 \\times 10^{0}$ \\\\\n345.00 & 6780.00 & $9.01 \\times 10^{0}$ \\\\\n\\end{center}\\end{table*}'
+    >>> numeric_format = {'Length': 'ROUND(2)', 'Weight': 'SCIENTIFIC'}
+    >>> units = {'Length': 'cm', 'Weight': ureg.gram}
+    >>> latex_str = export_df_to_latex(df, numeric_format, units)
+    >>> print(latex_str)
+    \\begin{table*}
+    \\begin{center}
+    \\begin{tabular}{ll}
+    \\toprule
+     Length [centimeter] & Weight [gram] \\
+    \\midrule
+     150.00 & $5.00 \\times 10^{4}$ \\
+     250.00 & $6.00 \\times 10^{4}$ \\
+     375.00 & $7.50 \\times 10^{4}$ \\
+    \\bottomrule
+    \\end{tabular}
+    \\end{center}
+    \\end{table*}
     """
     new_df = pd.DataFrame()
 
     for column in df.columns:
+        print(column)
         final_units = None
 
         if units is not None and column in units:
             final_units = units[column]
             data_with_dims = df[column].apply(lambda val: val.m_as(final_units))
         elif hasattr(df[column][0], 'units'):
-            final_units = df[column][0].units
+            final_units = df[column].iloc[-3].units
             data_with_dims = df[column].apply(lambda val: val.m_as(final_units))
         else:
             data_with_dims = df[column]
 
         if numeric_format is not None and column in numeric_format:
             numeric_style = numeric_format[column]
+            round_amount = default_round_amount if (column_round_amount := extract_text_within_parentheses(numeric_style)) is None else int(column_round_amount)
 
-            if numeric_style == "ROUND":
+            if bool(re.match(r'^ROUND(\(\d+\))?$', numeric_style)):
                 data_with_dims = data_with_dims.round(round_amount).apply(
-                    lambda x: f'{x:.{round_amount}f}'
+                    lambda x: f'{x:,.{round_amount}f}'
                 )
-            elif numeric_style == "SCIENTIFIC":
+            elif bool(re.match(r'^SCIENTIFIC(\(\d+\))?$', numeric_style)):
                 data_with_dims = data_with_dims.apply(
                     lambda x: (
-                        f"${x:.{round_amount}e}}}$".replace(
-                            "e", " \\times 10^{"
+                        f'${x:,.{round_amount}e}}}$'.replace(
+                            'e', ' \\times 10^{'
                         ).replace(
-                            "+0", ""
+                            '+0', ''
                         ).replace(
-                            "+", ""
+                            '+', ''
                         ).replace(
-                            "-0", "-"
+                            '-0', '-'
                         ).replace(
-                            "-", "-"
+                            '-', '-'
                         )
                     )
                 )
+
+        elif isinstance(data_with_dims[0], (float, int)):
+            data_with_dims = data_with_dims.round(default_round_amount).apply(
+                lambda x: f'{x:,.{default_round_amount}f}'
+            )
 
         column_name = f'{column}{"" if final_units is None else f" [{final_units}]"}'
         new_df[column_name] = data_with_dims
