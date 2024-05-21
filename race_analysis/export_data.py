@@ -92,7 +92,6 @@ def export_df_to_latex(
     new_df = pd.DataFrame()
 
     for column in df.columns:
-        print(column)
         final_units = None
 
         if units is not None and column in units:
