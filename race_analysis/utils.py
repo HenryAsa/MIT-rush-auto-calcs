@@ -11,6 +11,7 @@ functions are useful for file system navigation and manipulation.
 """
 
 import os
+import re
 from typing import Iterable, Optional
 
 from .constants import DATA_DIRECTORY
@@ -305,3 +306,57 @@ def filter_dict_removing_specified_keys(
         for key, value in dict_to_filter.items()
         if key not in keys_to_delete
     }
+
+
+def extract_text_within_parentheses(
+        text: str,
+    ) -> str | None:
+    """
+    Extracts the first text found within parentheses in a string.
+
+    This function uses a regular expression to find and return the
+    first substring enclosed in parentheses within the given text.  If
+    no such substring is found, it returns None.
+
+    Parameters
+    ----------
+    text : str
+        The input string from which to extract text within
+        parentheses.
+
+    Returns
+    -------
+    str or None
+        The first substring found within parentheses, or None if no
+        parentheses are found.
+
+    Examples
+    --------
+    Extract text within parentheses:
+
+    >>> extract_text_within_parentheses("Hello (world)!")
+    'world'
+
+    No parentheses in the text:
+
+    >>> extract_text_within_parentheses("Hello world!")
+    None
+
+    Multiple parentheses, only the first one is extracted:
+
+    >>> extract_text_within_parentheses("Hello (world)! (Again)!")
+    'world'
+
+    Empty parentheses:
+
+    >>> extract_text_within_parentheses("Hello ()!")
+    ''
+
+    Nested parentheses, outermost is extracted:
+
+    >>> extract_text_within_parentheses("Hello (world (again))!")
+    'world (again)'
+    """
+    pattern = re.compile(r'\((.*?)\)')
+    match = pattern.search(text)
+    return match.group(1) if match else None
