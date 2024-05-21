@@ -8,6 +8,7 @@ units-handling, and manipulating data within the DataFrames.
 
 from typing import Optional
 import pandas as pd
+import pint
 
 from race_analysis.units import Q_
 
@@ -506,3 +507,107 @@ def copy_attrs_to_new_df(
     """
     new_df.attrs = original_df.attrs
     return new_df
+
+
+def export_df_to_latex(
+        df: pd.DataFrame | pd.Series,
+        numeric_format: Optional[dict[str, str]] = None,
+        units: Optional[dict[str, str | pint.Unit]] = None,
+        round_amount: int = 2,
+    ) -> str:
+    """
+    Convert a Pandas DataFrame or Series to a LaTeX table string with
+    optional numeric formatting and unit handling.
+
+    This function processes a DataFrame or Series to format its
+    numeric values and append units to column headers, if specified.
+    It then converts the processed DataFrame to a LaTeX table string.
+
+    Parameters
+    ----------
+    df : pd.DataFrame or pd.Series
+        The DataFrame or Series to be converted to LaTeX format.
+    numeric_format : dict of str, optional
+        A dictionary specifying the numeric format for columns.  The
+        keys are column names and values are format types, which can
+        be "ROUND" or "SCIENTIFIC".
+    units : dict of str or pint.Unit, optional
+        A dictionary specifying the units for columns.  The keys are
+        column names and values are unit strings or `pint.Unit`
+        objects.
+    round_amount : int, default=2
+        The number of decimal places to round to if rounding is
+        applied.
+
+    Returns
+    -------
+    str
+        A string containing the LaTeX table representation of the
+        DataFrame.
+
+    See Also
+    --------
+    pandas.DataFrame.to_latex : Convert a DataFrame to a LaTeX
+                                tabular object.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import pint
+    >>> from pint_pandas import PintType
+    >>> ureg = pint.UnitRegistry()
+    >>> df = pd.DataFrame({
+    ...     'Length': [1.23, 2.34, 3.45] * ureg.meter,
+    ...     'Mass': [4.56, 5.67, 6.78] * ureg.kilogram,
+    ...     'Time': [7.89, 8.90, 9.01]
+    ... })
+    >>> numeric_format = {'Time': 'SCIENTIFIC'}
+    >>> units = {'Length': 'cm', 'Mass': ureg.gram}
+    >>> export_df_to_latex(df, numeric_format=numeric_format, units=units)
+    '\\begin{table*}\\begin{center}\\nLength [centimeter] & Mass [gram] & Time \\\\n123.00 & 4560.00 & $7.89 \\times 10^{0}$ \\\\\n234.00 & 5670.00 & $8.90 \\times 10^{0}$ \\\\\n345.00 & 6780.00 & $9.01 \\times 10^{0}$ \\\\\n\\end{center}\\end{table*}'
+    """
+    new_df = pd.DataFrame()
+
+    for column in df.columns:
+        final_units = None
+
+        if units is not None and column in units:
+            final_units = units[column]
+            data_with_dims = df[column].apply(lambda val: val.m_as(final_units))
+        elif hasattr(df[column][0], 'units'):
+            final_units = df[column][0].units
+            data_with_dims = df[column].apply(lambda val: val.m_as(final_units))
+        else:
+            data_with_dims = df[column]
+
+        if numeric_format is not None and column in numeric_format:
+            numeric_style = numeric_format[column]
+
+            if numeric_style == "ROUND":
+                data_with_dims = data_with_dims.round(round_amount).apply(
+                    lambda x: f'{x:.{round_amount}f}'
+                )
+            elif numeric_style == "SCIENTIFIC":
+                data_with_dims = data_with_dims.apply(
+                    lambda x: (
+                        f"${x:.{round_amount}e}}}$".replace(
+                            "e", " \\times 10^{"
+                        ).replace(
+                            "+0", ""
+                        ).replace(
+                            "+", ""
+                        ).replace(
+                            "-0", "-"
+                        ).replace(
+                            "-", "-"
+                        )
+                    )
+                )
+
+        column_name = f'{column}{"" if final_units is None else f" [{final_units}]"}'
+        new_df[column_name] = data_with_dims
+
+    table_top_wrapper = '\\begin{table*}\n\\begin{center}\n'
+    table_bottom_wrapper = '\\end{center}\n\\end{table*}'
+
+    return f'{table_top_wrapper}{new_df.to_latex(index=False)}{table_bottom_wrapper}'
