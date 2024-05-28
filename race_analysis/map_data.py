@@ -278,7 +278,7 @@ def plot_map(
     point_size = 10
 
     for _, row in new_df.iterrows():
-        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color="white", marker='o', markersize=point_size+2, alpha=0.7, transform=ccrs.Geodetic())
+        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color="white", marker='o', markersize=point_size+4, alpha=0.7, transform=ccrs.Geodetic())
 
     for _, row in new_df.iterrows():
         row_value = row[data_name]
@@ -305,7 +305,8 @@ def plot_map(
     # Create the colorbar
     colorbar = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=custom_cmap), ax=ax, orientation='vertical', label=colorbar_label)
 
-    plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
+    # plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
+    plt.title(f'Vehicle {data_name} - Lap {lap_num}')
     plt.tight_layout()
 
     if save_plots:
