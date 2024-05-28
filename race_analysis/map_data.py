@@ -275,13 +275,18 @@ def plot_map(
     zoom_level = 18
     ax.add_image(tile_source.value, zoom_level)
 
+    point_size = 10
+
+    for _, row in new_df.iterrows():
+        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color="white", marker='o', markersize=point_size+2, alpha=0.7, transform=ccrs.Geodetic())
+
     for _, row in new_df.iterrows():
         row_value = row[data_name]
         if set_custom_colors is not None and row_value in set_custom_colors:
             color = set_custom_colors[row_value]
         else:
             color = cmap(norm(row_value))
-        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=10, alpha=0.7, transform=ccrs.Geodetic())
+        ax.plot(row[COL_LONGITUDE], row[COL_LATITUDE], color=color, marker='o', markersize=point_size, alpha=0.7, transform=ccrs.Geodetic())
 
     # Custom colormap to handle values less than zero in red
     if set_custom_colors is not None:
