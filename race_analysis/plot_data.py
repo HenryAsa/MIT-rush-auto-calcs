@@ -128,7 +128,7 @@ def save_plot(
     filepath = f'{PLOTS_DIRECTORY}/{get_filename(data_file).removesuffix(".csv")}/{lap_folder}{name}.pdf'
     os.makedirs(get_folder_from_filepath(filepath), exist_ok=True)
 
-    plt.savefig(filepath)
+    plt.savefig(filepath, bbox_inches='tight')
 
 
 def save_or_show_plot(

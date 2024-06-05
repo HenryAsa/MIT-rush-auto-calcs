@@ -267,12 +267,27 @@ def plot_map(
     cmap = plt.get_cmap('viridis')
     map_spacing = 0.001
 
+    #### DETERMINE OPTIMAL FIGURE DIMENSIONS ####
+    lon_min, lon_max = min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing
+    lat_min, lat_max = min(new_df[COL_LATITUDE]) - map_spacing,  max(new_df[COL_LATITUDE]) + map_spacing
+
+    max_size = 10
+
+    # Calculate the aspect ratio of the map
+    aspect_ratio = (lat_max - lat_min) / (lon_max - lon_min)
+
+    if aspect_ratio >= 1:
+        figsize = (max_size / aspect_ratio, max_size)
+    else:
+        figsize = (max_size, max_size * aspect_ratio)
+    #############################################
+
     # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': tile_source.value.crs})
+    fig, ax = plt.subplots(figsize=figsize, dpi=300, subplot_kw={'projection': tile_source.value.crs})
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
-    zoom_level = 18
+    zoom_level = 19
     ax.add_image(tile_source.value, zoom_level)
 
     point_size = 10
