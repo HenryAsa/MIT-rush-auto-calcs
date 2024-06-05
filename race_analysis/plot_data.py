@@ -120,9 +120,15 @@ def save_plot(
     Save a plot with a lap number:
     >>> save_plot('data/session1.csv', lap_num=1.0)
     """
-    ax = plt.gca()
 
-    if name is None:    name = ax.get_title()
+    if name is None:
+        ax = plt.gca()
+        name = ax.get_title()
+
+    if name == "":
+        fig = plt.gcf()
+        name = fig._suptitle.get_text()
+
     lap_folder = f'Lap {lap_num}/' if lap_num is not None else ''
 
     filepath = f'{PLOTS_DIRECTORY}/{get_filename(data_file).removesuffix(".csv")}/{lap_folder}{name}.pdf'

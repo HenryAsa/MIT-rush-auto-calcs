@@ -283,7 +283,7 @@ def plot_map(
     #############################################
 
     # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=figsize, dpi=300, subplot_kw={'projection': tile_source.value.crs})
+    fig, ax = plt.subplots(figsize=figsize, dpi=250, subplot_kw={'projection': tile_source.value.crs})
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
@@ -318,14 +318,16 @@ def plot_map(
         custom_cmap = cmap
 
     # Create the colorbar
-    colorbar = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=custom_cmap), ax=ax, orientation='vertical', label=colorbar_label)
+    colorbar = plt.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=custom_cmap), ax=ax, orientation='vertical', label=colorbar_label, pad=0.02, aspect=15)
+    colorbar.set_label(colorbar_label, labelpad=15, fontsize=14)
+    colorbar.ax.tick_params(labelsize=12)
 
     # plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
-    plt.title(f'Vehicle {data_name} - Lap {lap_num}')
+    fig.suptitle(f'Vehicle {data_name} - Lap {lap_num}', fontsize=16)
     plt.tight_layout()
 
     if save_plots:
-        save_plot(data_filepath, name=f'{tile_source.name} {ax.get_title()}', lap_num=lap_num)
+        save_plot(data_filepath, name=f'{tile_source.name} {ax.get_title if ax.get_title() != "" else fig._suptitle.get_text()}', lap_num=lap_num)
     if show_plots:
         plt.show()
 
