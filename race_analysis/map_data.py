@@ -291,7 +291,7 @@ def plot_map(
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
-    zoom_level = 19
+    zoom_level = 20
     ax.add_image(tile_source.value, zoom_level)
 
     point_size = 10
@@ -326,8 +326,9 @@ def plot_map(
     colorbar.set_label(colorbar_label, labelpad=15, fontsize=14)
     colorbar.ax.tick_params(labelsize=12)
 
+    plot_title = f'{data_name} - Lap {lap_num}'
     # plt.title(f'Vehicle {data_name} on {tile_source.name} - Lap {lap_num}')
-    fig.suptitle(f'Vehicle {data_name} - Lap {lap_num}', fontsize=16)
+    # fig.suptitle(plot_title, fontsize=16)
     plt.tight_layout()
 
     if save_plots:
