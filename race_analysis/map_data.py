@@ -165,6 +165,7 @@ def plot_map(
         tile_source: MapType = MapType.OSM,
         save_plots: bool = True,
         show_plots: bool = False,
+        track_name: Optional[str] = None,
         set_custom_colors: Optional[dict[float, str]] = None,
     ) -> None:
     """
@@ -199,6 +200,9 @@ def plot_map(
         displayed while running.  If False, the plot will not be
         displayed.  If True, the plot will be displayed.  By default
         False.
+    track_name : str, optional
+        The name of the track being plotted.  If defined, the plot's
+        saved filename will be prepended by the track name.
     set_custom_colors : dict[float, str], optional
         Optional dictionary mapping values in the dataset to specific
         colors that should be plotted for those specific values.  For
@@ -283,7 +287,7 @@ def plot_map(
     #############################################
 
     # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=figsize, dpi=250, subplot_kw={'projection': tile_source.value.crs})
+    fig, ax = plt.subplots(figsize=figsize, dpi=200, subplot_kw={'projection': tile_source.value.crs})
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
@@ -327,10 +331,13 @@ def plot_map(
     plt.tight_layout()
 
     if save_plots:
-        save_plot(data_filepath, name=f'{tile_source.name} {ax.get_title if ax.get_title() != "" else fig._suptitle.get_text()}', lap_num=lap_num)
+        final_filename = f'{f"{track_name} - " if track_name is not None else ""}{plot_title}'
+        save_plot(data_filepath, name=final_filename, lap_num=lap_num)
     if show_plots:
         plt.show()
 
+    plt.cla()
+    plt.clf()
     plt.close()
 
 
@@ -344,6 +351,7 @@ def plot_map_every_lap(
         usable_laps: Optional[list[int]] = None,
         save_plots: bool = True,
         show_plots: bool = False,
+        track_name: Optional[str] = None,
         set_custom_colors: Optional[dict[float, str]] = None,
     ) -> None:
     """
@@ -379,6 +387,9 @@ def plot_map_every_lap(
         displayed while running.  If False, the plot will not be
         displayed.  If True, the plot will be displayed.  By default
         False.
+    track_name : str, optional
+        The name of the track being plotted.  If defined, the plot's
+        saved filename will be prepended by the track name.
     set_custom_colors : dict[float, str], optional
         Optional dictionary mapping values in the dataset to specific
         colors that should be plotted for those specific values.  For
@@ -434,5 +445,6 @@ def plot_map_every_lap(
             tile_source=tile_source,
             save_plots=save_plots,
             show_plots=show_plots,
+            track_name=track_name,
             set_custom_colors=set_custom_colors,
         )
