@@ -9,6 +9,7 @@ units-handling, and manipulating data within the DataFrames.
 from typing import Optional
 import pandas as pd
 
+from race_analysis.column_names import COL_LAP_NUM
 from race_analysis.units import Q_
 
 
@@ -506,3 +507,89 @@ def copy_attrs_to_new_df(
     """
     new_df.attrs = original_df.attrs
     return new_df
+
+def normalize_column(
+        df: pd.DataFrame,
+        column_name: str,
+        new_min: float,
+        new_max: float,
+        lap_num: Optional[int],
+    ) -> pd.DataFrame:
+    """
+    Normalize a specified column in a DataFrame to a new range.
+
+    This function normalizes the values of a specified column in a
+    DataFrame to a new range defined by `new_min` and `new_max`.  If
+    `lap_num` is provided, normalization is performed based on the
+    values within the specified lap number; otherwise, normalization
+    is based on the entire column.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The DataFrame containing the column to be normalized.
+    column_name : str
+        The name of the column to be normalized.
+    new_min : float
+        The new minimum value for the normalized column.
+    new_max : float
+        The new maximum value for the normalized column.
+    lap_num : Optional[int]
+        The lap number to filter the DataFrame by before normalizing.
+        If None, the entire column is used.
+
+    Returns
+    -------
+    pd.DataFrame
+        The DataFrame with the normalized column added.  The new
+        column is named '{column_name} - Normalized'.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> import pint
+    >>> ureg = pint.UnitRegistry()
+    >>> df = pd.DataFrame({
+    ...     'speed': [100, 150, 200, 250] * ureg.mph,
+    ...     'lap': [1, 1, 2, 2]
+    ... })
+    >>> normalize_column(df, 'speed', 0, 1, lap_num=1)
+       speed   lap  speed - Normalized
+    0  100 mph    1          0.0
+    1  150 mph    1          1.0
+    2  200 mph    2          NaN
+    3  250 mph    2          NaN
+
+    >>> normalize_column(df, 'speed', 0, 1, lap_num=None)
+       speed   lap  speed - Normalized
+    0  100 mph    1          0.0
+    1  150 mph    1          0.25
+    2  200 mph    2          0.75
+    3  250 mph    2          1.0
+    """
+    try:
+        column_units = df[column_name].pint.units
+        col_values = df[column_name].pint.magnitude
+    except:
+        column_units = None
+        col_values = df[column_name]
+
+    if lap_num is not None:
+        lap_df = df[df[COL_LAP_NUM] == lap_num]
+        lap_col_values = lap_df[column_name].pint.magnitude if column_units is not None else lap_df[column_name]
+        min_val = lap_col_values.min()
+        max_val = lap_col_values.max()
+    else:
+        min_val = col_values.min()
+        max_val = col_values.max()
+
+    normalized_values = ((col_values - min_val) / (max_val - min_val)) * (new_max - new_min) + new_min
+
+    if column_units is not None:
+        normalized_column = pd.Series(data=normalized_values, dtype=f'pint[{column_units}]')
+    else:
+        normalized_column = normalized_values
+
+    df[f'{column_name} - Normalized'] = normalized_column
+
+    return df
