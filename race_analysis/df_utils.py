@@ -508,6 +508,7 @@ def copy_attrs_to_new_df(
     new_df.attrs = original_df.attrs
     return new_df
 
+
 def normalize_column(
         df: pd.DataFrame,
         column_name: str,
