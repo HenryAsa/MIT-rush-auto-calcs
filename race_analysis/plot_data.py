@@ -193,3 +193,39 @@ def save_or_show_plot(
     """
     if not save_plots and not show_plots:
         raise ValueError('This function effectively does nothing since both `save_plots` and `show_plots` are set to False.  At least one of these options must be True.')
+
+
+def reset_plot() -> None:
+    """
+    Reset the current Matplotlib plot.
+
+    This function clears the current plot's axes, clears the current
+    figure, and closes the figure window.  It is useful for ensuring
+    that no residual plot data or settings affect subsequent plots.
+
+    Notes
+    -----
+    This function is intended to be used in a workflow where multiple
+    plots are generated in succession, and it is necessary to start
+    each plot from a clean slate.
+
+    Examples
+    --------
+    Resetting a plot before creating a new one:
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.plot([1, 2, 3], [4, 5, 6])
+    >>> reset_plot()
+    >>> plt.plot([7, 8, 9], [10, 11, 12])
+    >>> plt.show()
+
+    Using in a loop to create multiple independent plots:
+
+    >>> for i in range(3):
+    ...     plt.plot([1, 2, 3], [i, i+1, i+2])
+    ...     plt.show()
+    ...     reset_plot()
+    """
+    plt.cla()
+    plt.clf()
+    plt.close()
