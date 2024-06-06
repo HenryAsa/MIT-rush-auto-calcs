@@ -515,6 +515,7 @@ def normalize_column(
         new_min: float,
         new_max: float,
         lap_num: Optional[int],
+        normalized_units: Optional[str],
     ) -> pd.DataFrame:
     """
     Normalize a specified column in a DataFrame to a new range.
@@ -586,9 +587,14 @@ def normalize_column(
 
     normalized_values = ((col_values - min_val) / (max_val - min_val)) * (new_max - new_min) + new_min
 
-    if column_units is not None:
+    if normalized_units is not None:
+        print(f'NORMALIZING DATA - SETTING NORMALIZED UNITS: SETTING TO {normalized_units}')
+        normalized_column = pd.Series(data=normalized_values, dtype=f'pint[{normalized_units}]')
+    elif column_units is not None:
+        print(f'NORMALIZING DATA - KEEPING ORIGINAL COLUMN UNITS: SETTING TO {column_units}')
         normalized_column = pd.Series(data=normalized_values, dtype=f'pint[{column_units}]')
     else:
+        print(f'NORMALIZING DATA - UNITLESS DATA WITH NO SPECIFIED UNITS, SO NORMALIZATION IS ALSO UNITLESS')
         normalized_column = normalized_values
 
     df[f'{column_name} - Normalized'] = normalized_column
