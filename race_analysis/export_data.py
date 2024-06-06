@@ -14,6 +14,8 @@ import pandas as pd
 import pint
 import scipy
 
+from race_analysis.column_names import COL_TIME
+
 from .df_utils import strip_df_of_units
 from .utils import extract_text_within_parentheses, get_folder_from_filepath
 
@@ -143,9 +145,9 @@ def export_df_to_latex(
 
 
 def export_data_to_csv(
-        time_df: pd.DataFrame | pd.Series,
         data_dfs: pd.DataFrame | Iterable[pd.Series],
-        filename: str
+        filename: str,
+        time_df: Optional[pd.DataFrame | pd.Series] = None,
     ) -> None:
     """
     Export time series data and associated data series to a CSV file.
@@ -158,10 +160,6 @@ def export_data_to_csv(
 
     Parameters
     ----------
-    time_df : pd.DataFrame | pd.Series
-        The time series DataFrame or Series, which should include Pint
-        quantities.  The time series data is used as the index in the
-        exported CSV.
     data_dfs : pd.DataFrame | Iterable[pd.Series]
         An iterable of pandas Series objects representing the data to
         be exported alongside the time series.  Each series must have
@@ -169,6 +167,13 @@ def export_data_to_csv(
     filename : str
         The name of the file to which the combined data will be
         exported.
+    time_df : pd.DataFrame | pd.Series, optional
+        The time series DataFrame or Series, which should include Pint
+        quantities.  The time series data is used as the index in the
+        exported CSV.  If unspecified, the exporting function will
+        check whether `data_dfs` contains a 'Time' column and will use
+        that if it exists.  If no 'Time' column is found, the data
+        will be exported based on the index.
 
     Raises
     ------
@@ -188,8 +193,14 @@ def export_data_to_csv(
     """
     incorrect_type_error = TypeError(f'data_dfs must be an Iterable of pd.Series or a pd.Series, but instead it is of type "{type(data_dfs)}"')
     export_df = pd.DataFrame()
-    unitless_time_series = strip_df_of_units(time_df)
-    export_df[unitless_time_series.name] = unitless_time_series
+
+    if time_df is None:
+        if COL_TIME in data_dfs.columns:
+            unitless_time_series = strip_df_of_units(data_dfs[COL_TIME])
+            export_df[unitless_time_series.name] = unitless_time_series
+    else:
+        unitless_time_series = strip_df_of_units(time_df)
+        export_df[unitless_time_series.name] = unitless_time_series
 
     if isinstance(data_dfs, pd.Series):
         data_dfs = [data_dfs]
@@ -205,7 +216,9 @@ def export_data_to_csv(
     else:
         raise incorrect_type_error
 
-    os.makedirs(get_folder_from_filepath(filename), exist_ok=True)
+    enclosing_folder = get_folder_from_filepath(filename)
+    if enclosing_folder != '':
+        os.makedirs(get_folder_from_filepath(filename), exist_ok=True)
 
     export_df.to_csv(filename)
 
