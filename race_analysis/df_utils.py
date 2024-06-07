@@ -250,7 +250,7 @@ def slice_into_df(
         df: pd.DataFrame,
         start_index: Optional[int] = None,
         end_index: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> pd.DataFrame | pd.Series:
     """
     Extract a slice from a DataFrame between specified indices.
 
@@ -273,7 +273,7 @@ def slice_into_df(
 
     Returns
     -------
-    pd.DataFrame
+    pd.DataFrame or pd.Series
         A DataFrame containing the rows from `start_index` to
         `end_index`.
 
@@ -602,6 +602,113 @@ def normalize_column(
     return df
 
 
+def _get_nth_value(
+        series_or_df: pd.DataFrame | pd.Series,
+        precedes_value: Optional[float | dict[Hashable, float]] = None,
+    ) -> float | dict[str, float]:
+    """
+    Helper function to filter values preceding a specified value in a
+    Pandas Series or DataFrame.
+
+    This function processes a Pandas Series or DataFrame, filtering
+    values that precede a given value.  It also handles Pint units and
+    PintArray objects.
+
+    Parameters
+    ----------
+    series_or_df : pd.DataFrame or pd.Series
+        Input data to be processed.
+    precedes_value : float or dict[Hashable, float], optional
+        A value or a dictionary of values used to filter the series.
+        Only values preceding this will be considered.
+
+    Returns
+    -------
+    tuple or dict[str, tuple]
+        If the input is a Series, returns a tuple of the filtered
+        series and units (if any).  If the input is a DataFrame,
+        returns a dictionary with column names as keys and tuples of
+        the filtered series and units as values.
+
+    Raises
+    ------
+    TypeError
+        If the input is not a Pandas Series or DataFrame.
+
+    Notes
+    -----
+    - This function handles Pint units and PintArray objects.
+    - If `precedes_value` is provided, only values before the
+      specified value will be considered.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from pint import UnitRegistry
+    >>> ureg = UnitRegistry()
+    >>> Q_ = ureg.Quantity
+
+    >>> series = pd.Series([3, 1, 4, 1, 5, 9, 2])
+    >>> _get_nth_value(series, precedes_value=4)
+    (0    3
+    1    1
+    2    4
+    dtype: int64, None)
+
+    >>> df = pd.DataFrame({
+    ...     'A': [3, 1, 4, 1, 5, 9, 2],
+    ...     'B': [10, 20, 10, 30, 10, 40, 50]
+    ... })
+    >>> _get_nth_value(df, precedes_value={'A': 4, 'B': 30})
+    {'A': (0    3
+    1    1
+    2    4
+    Name: A, dtype: int64, None),
+     'B': (0    10
+    1    20
+    2    10
+    Name: B, dtype: int64, None)}
+    """
+    def _get_filtered_series(
+            series: pd.Series,
+            precedes_value: Optional[float] = None,
+        ) -> pd.Series:
+        if precedes_value is None:  return series
+
+        try:
+            target_value = precedes_value.magnitude
+        except:
+            target_value = precedes_value
+
+        target_indices = series[series == target_value].index
+        valid_indices = target_indices[target_indices > 0] - 1
+        valid_indices = valid_indices[valid_indices.isin(series.index)]
+        values_before_target = series.loc[valid_indices]
+
+        return values_before_target
+
+    def _get_computation_values(series: pd.Series) -> tuple:
+        dtype = str(series.dtype)
+        if dtype.startswith('pint['):
+            return series.pint.magnitude, series.pint.units
+        else:
+            return series, None
+
+    if isinstance(series_or_df, pd.Series):
+        series, units = _get_computation_values(series_or_df)
+        return (_get_filtered_series(series, precedes_value), units)
+
+    elif isinstance(series_or_df, pd.DataFrame):
+        result = {}
+        for column in series_or_df.columns:
+            series, units = _get_computation_values(series_or_df[column])
+            result[column] = (_get_filtered_series(series, precedes_value), units)
+        return result
+
+    else:
+        raise TypeError(f'Input must be a Pandas Series or DataFrame, but it was a {type(series_or_df)}')
+
+
 def get_nth_smallest_value(
         series_or_df: pd.DataFrame | pd.Series,
         nth_smallest: int,
@@ -682,34 +789,8 @@ def get_nth_smallest_value(
     >>> get_nth_smallest_value(series_with_units, 2)
     <Quantity(3, 'meter')>
     """
-    def _get_filtered_series(
-            series: pd.Series,
-            precedes_value: Optional[float] = None,
-        ) -> pd.Series:
-        if precedes_value is None:  return series
-
-        try:
-            target_value = precedes_value.magnitude
-        except:
-            target_value = precedes_value
-
-        target_indices = series[series == target_value].index
-        valid_indices = target_indices[target_indices > 0] - 1
-        valid_indices = valid_indices[valid_indices.isin(series.index)]
-        values_before_target = series.loc[valid_indices]
-
-        return values_before_target
-
-    def _get_computation_values(series: pd.Series) -> tuple:
-        dtype = str(series.dtype)
-        if dtype.startswith('pint['):
-            return series.pint.magnitude, series.pint.units
-        else:
-            return series, None
-
     if isinstance(series_or_df, pd.Series):
-        series, units = _get_computation_values(series_or_df)
-        filtered_series = _get_filtered_series(series, precedes_value)
+        filtered_series, units = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
         nth_smallest_series = pd.Series(filtered_series.unique()).nsmallest(nth_smallest)
 
         if len(nth_smallest_series) < nth_smallest:
@@ -721,10 +802,10 @@ def get_nth_smallest_value(
 
     elif isinstance(series_or_df, pd.DataFrame):
         result = {}
-        for column in series_or_df.columns:
-            series, units = _get_computation_values(series_or_df[column])
-            filtered_series = _get_filtered_series(series, precedes_value)
-            nth_smallest_series = pd.Series(series.unique()).nsmallest(nth_smallest)
+        filtered_data = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
+        for column, data in filtered_data.items():
+            filtered_series, units = data
+            nth_smallest_series = pd.Series(filtered_series.unique()).nsmallest(nth_smallest)
 
             if len(nth_smallest_series) < nth_smallest:
                 result[column] = None
@@ -817,34 +898,8 @@ def get_nth_largest_value(
     >>> get_nth_largest_value(series_with_units, 2)
     <Quantity(3, 'meter')>
     """
-    def _get_filtered_series(
-            series: pd.Series,
-            precedes_value: Optional[float] = None,
-        ) -> pd.Series:
-        if precedes_value is None:  return series
-
-        try:
-            target_value = precedes_value.magnitude
-        except:
-            target_value = precedes_value
-
-        target_indices = series[series == target_value].index
-        valid_indices = target_indices[target_indices > 0] - 1
-        valid_indices = valid_indices[valid_indices.isin(series.index)]
-        values_before_target = series.loc[valid_indices]
-
-        return values_before_target
-
-    def _get_computation_values(series: pd.Series) -> tuple:
-        dtype = str(series.dtype)
-        if dtype.startswith('pint['):
-            return series.pint.magnitude, series.pint.units
-        else:
-            return series, None
-
     if isinstance(series_or_df, pd.Series):
-        series, units = _get_computation_values(series_or_df)
-        filtered_series = _get_filtered_series(series, precedes_value)
+        filtered_series, units = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
         nth_largest_series = pd.Series(filtered_series.unique()).nlargest(nth_largest)
 
         if len(nth_largest_series) < nth_largest:
@@ -856,10 +911,10 @@ def get_nth_largest_value(
 
     elif isinstance(series_or_df, pd.DataFrame):
         result = {}
-        for column in series_or_df.columns:
-            series, units = _get_computation_values(series_or_df[column])
-            filtered_series = _get_filtered_series(series, precedes_value)
-            nth_largest_series = pd.Series(series.unique()).nlargest(nth_largest)
+        filtered_data = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
+        for column, data in filtered_data.items():
+            filtered_series, units = data
+            nth_largest_series = pd.Series(filtered_series.unique()).nlargest(nth_largest)
 
             if len(nth_largest_series) < nth_largest:
                 result[column] = None
