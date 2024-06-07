@@ -6,7 +6,7 @@ Extension functions that streamline Pandas DataFrame operations,
 units-handling, and manipulating data within the DataFrames.
 """
 
-from typing import Optional
+from typing import Hashable, Optional
 import pandas as pd
 
 from race_analysis.column_names import COL_LAP_NUM
@@ -600,3 +600,136 @@ def normalize_column(
     df[f'{column_name} - Normalized'] = normalized_column
 
     return df
+
+
+def get_nth_smallest_value(
+        series_or_df: pd.DataFrame | pd.Series,
+        nth_smallest: int,
+        precedes_value: Optional[float | dict[Hashable, float]] = None,
+    ) -> float | dict[str, float]:
+    """
+    Get the nth smallest unique value from a Pandas Series or
+    DataFrame.
+
+    This function retrieves the nth smallest unique value from a given
+    Pandas Series or DataFrame, optionally filtering values that
+    precede a specified value.  It supports Pint units and PintArray
+    objects in addition to non-dimensionalized Pandas objects.
+
+    Parameters
+    ----------
+    series_or_df : pd.DataFrame or pd.Series
+        Input data from which the nth smallest value is retrieved.
+    nth_smallest : int
+        The rank of the smallest value to retrieve.
+    precedes_value : float or dict[Hashable, float], optional
+        A value or a dictionary of values used to filter the series.
+        Only values preceding this will be considered.
+
+    Returns
+    -------
+    float or dict[str, float]
+        The nth smallest unique value if the input is a Series, or a
+        dictionary of nth smallest values for each column if the input
+        is a DataFrame.
+
+    Raises
+    ------
+    ValueError
+        If the input does not contain enough unique values to satisfy
+        the nth smallest requirement.
+    TypeError
+        If the input is not a Pandas Series or DataFrame.
+
+    Notes
+    -----
+    - This function handles Pint units and PintArray objects.
+    - If `precedes_value` is provided, only values before the
+      specified value will be considered.
+
+    See Also
+    --------
+    pd.Series.nsmallest : Return the first n smallest elements.
+    pd.Series.unique : Return unique values of Series object.
+    Pint : Pint is a Python package to define, operate and manipulate
+           physical quantities: the product of a numerical value and a
+           unit of measurement.
+    PintArray : PintArray is an extension type for handling physical
+                quantities with units in Pandas.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from pint import UnitRegistry
+    >>> ureg = UnitRegistry()
+    >>> Q_ = ureg.Quantity
+
+    >>> series = pd.Series([3, 1, 4, 1, 5, 9, 2])
+    >>> get_nth_smallest_value(series, 2)
+    2
+
+    >>> df = pd.DataFrame({
+    ...     'A': [3, 1, 4, 1, 5, 9, 2],
+    ...     'B': [10, 20, 10, 30, 10, 40, 50]
+    ... })
+    >>> get_nth_smallest_value(df, 2)
+    {'A': 2, 'B': 20}
+
+    >>> series_with_units = pd.Series([Q_(3, 'm'), Q_(1, 'm'), Q_(4, 'm'), Q_(1, 'm')])
+    >>> get_nth_smallest_value(series_with_units, 2)
+    <Quantity(3, 'meter')>
+    """
+    def _get_filtered_series(
+            series: pd.Series,
+            precedes_value: Optional[float] = None,
+        ) -> pd.Series:
+        if precedes_value is None:  return series
+
+        try:
+            target_value = precedes_value.magnitude
+        except:
+            target_value = precedes_value
+
+        target_indices = series[series == target_value].index
+        valid_indices = target_indices[target_indices > 0] - 1
+        valid_indices = valid_indices[valid_indices.isin(series.index)]
+        values_before_target = series.loc[valid_indices]
+
+        return values_before_target
+
+    def _get_computation_values(series: pd.Series) -> tuple:
+        dtype = str(series.dtype)
+        if dtype.startswith('pint['):
+            return series.pint.magnitude, series.pint.units
+        else:
+            return series, None
+
+    if isinstance(series_or_df, pd.Series):
+        series, units = _get_computation_values(series_or_df)
+        filtered_series = _get_filtered_series(series, precedes_value)
+        nth_smallest_series = pd.Series(filtered_series.unique()).nsmallest(nth_smallest)
+
+        if len(nth_smallest_series) < nth_smallest:
+            raise ValueError(f'The input must have at least {nth_smallest} unique values.')
+
+        nth_smallest_value = nth_smallest_series.iloc[-1]
+
+        return nth_smallest_value if units is None else Q_(nth_smallest_value, units)
+
+    elif isinstance(series_or_df, pd.DataFrame):
+        result = {}
+        for column in series_or_df.columns:
+            series, units = _get_computation_values(series_or_df[column])
+            filtered_series = _get_filtered_series(series, precedes_value)
+            nth_smallest_series = pd.Series(series.unique()).nsmallest(nth_smallest)
+
+            if len(nth_smallest_series) < nth_smallest:
+                result[column] = None
+            else:
+                nth_smallest_value = nth_smallest_series.iloc[-1]
+                result[column] = nth_smallest_value if units is None else Q_(nth_smallest_value, units)
+
+        return result
+
+    else:
+        raise TypeError(f'Input must be a Pandas Series or DataFrame, but it was a {type(series_or_df)}')
