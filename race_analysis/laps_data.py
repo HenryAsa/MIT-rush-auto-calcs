@@ -20,6 +20,7 @@ from .utils import get_filename, get_files_with_extension
 LAP_JSON_DATA = None
 """Parsed data from the lap_times.json file"""
 
+
 def _initialize_lap_data_from_json(
         lap_times_json_filepath: str = LAP_TIMES_FILEPATH,
     ) -> dict:
@@ -58,7 +59,8 @@ def _initialize_lap_data_from_json(
         all_lap_data: dict = json.load(lap_times_file)
 
     for dataset_filename, lap_data in all_lap_data.items():
-        lap_data['lap_times'] = convert_time_list_to_seconds(lap_data['lap_times'])
+        lap_data['lap_times_str'] = lap_data.pop('lap_times')
+        lap_data['lap_times'] = convert_time_list_to_seconds(lap_data['lap_times_str'])
 
     LAP_JSON_DATA = all_lap_data
     return all_lap_data
