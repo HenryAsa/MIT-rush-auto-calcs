@@ -9,7 +9,7 @@
 project = 'MIT Rush Auto Analysis'
 copyright = '2024, Henry Asa'
 author = 'Henry Asa'
-release = '0.0.0'
+release = '1.0.0'
 
 import os
 import sys
@@ -19,12 +19,6 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-# extensions = [
-#     'sphinx.ext.autodoc',
-#     'sphinx.ext.coverage',
-#     'sphinx.ext.napoleon',
-# ]
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -48,6 +42,7 @@ exclude_patterns = []
 # -----------------------------------------------------------------------------
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
+
 intersphinx_mapping = {
     'neps': ('https://numpy.org/neps', None),
     'python': ('https://docs.python.org/3', None),
@@ -71,6 +66,7 @@ intersphinx_mapping = {
 # -----------------------------------------------------------------------------
 # Autosummary
 # -----------------------------------------------------------------------------
+
 autosummary_generate = True             # Turn on sphinx.ext.autosummary
 autoclass_content = "both"              # Add __init__ doc (ie. params) to class summaries
 html_show_sourcelink = False            # Remove 'view source code' from top of page (for html, not python)
@@ -109,19 +105,20 @@ module_mappings = {
     'np': 'numpy',
     'pd': 'pandas',
     'plt': 'matplotlib.pyplt',
-    # Add more mappings as needed
 }
 
 def replace_modules_with_full_path(app, what, name, obj, options, signature, return_annotation):
     if signature:
         for alias, fullpath in module_mappings.items():
-            signature = signature.replace(f'{alias}.', f'{fullpath}.')
+            if f'{alias}.' in signature:
+                signature = signature.replace(f'{alias}.', f'{fullpath}.')
     return (signature, return_annotation)
 
 def replace_modules_in_docstring(app, what, name, obj, options, lines):
     for i, line in enumerate(lines):
         for alias, fullpath in module_mappings.items():
-            lines[i] = line.replace(f'{alias}.', f'{fullpath}.')
+            if f'{alias}.' in line:
+                lines[i] = line.replace(f'{alias}.', f'{fullpath}.')
 
 def setup(app: Sphinx):
     app.connect('autodoc-process-signature', replace_modules_with_full_path)
