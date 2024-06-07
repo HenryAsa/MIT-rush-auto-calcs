@@ -604,34 +604,43 @@ def normalize_column(
 
 def _get_nth_value(
         series_or_df: pd.DataFrame | pd.Series,
+        nth_value: int,
+        value_type: str,
         precedes_value: Optional[float | dict[Hashable, float]] = None,
     ) -> float | dict[str, float]:
     """
-    Helper function to filter values preceding a specified value in a
-    Pandas Series or DataFrame.
+    Retrieve the nth smallest or largest unique value from a Pandas
+    Series or DataFrame.
 
-    This function processes a Pandas Series or DataFrame, filtering
-    values that precede a given value.  It also handles Pint units and
-    PintArray objects.
+    This function returns the nth smallest or largest unique value
+    from the given Pandas Series or DataFrame.  Optionally, it can
+    filter the values that precede a specified value.  It also
+    supports Pint units and PintArray objects.
 
     Parameters
     ----------
     series_or_df : pd.DataFrame or pd.Series
-        Input data to be processed.
+        The input data from which the nth value is retrieved.
+    nth_value : int
+        The rank of the value to retrieve.
+    value_type : str
+        Specifies whether to retrieve the 'SMALLEST' or 'LARGEST'
+        value.
     precedes_value : float or dict[Hashable, float], optional
         A value or a dictionary of values used to filter the series.
         Only values preceding this will be considered.
 
     Returns
     -------
-    tuple or dict[str, tuple]
-        If the input is a Series, returns a tuple of the filtered
-        series and units (if any).  If the input is a DataFrame,
-        returns a dictionary with column names as keys and tuples of
-        the filtered series and units as values.
+    float or dict[str, float]
+        The nth unique value if the input is a Series, or a dictionary
+        of nth values for each column if the input is a DataFrame.
 
     Raises
     ------
+    ValueError
+        If the input does not contain enough unique values to satisfy
+        the nth value requirement.
     TypeError
         If the input is not a Pandas Series or DataFrame.
 
@@ -641,6 +650,23 @@ def _get_nth_value(
     - If `precedes_value` is provided, only values before the
       specified value will be considered.
 
+    See Also
+    --------
+    get_nth_smallest_value : Wrapper function that returns the nth
+                             smallest value in a pd.DataFrame or
+                             pd.Series.
+    get_nth_largest_value : Wrapper function that returns the nth
+                            largest value in a pd.DataFrame or
+                            pd.Series.
+    pd.Series.nsmallest : Return the first n smallest elements.
+    pd.Series.nlargest : Return the first n largest elements.
+    pd.Series.unique : Return unique values of Series object.
+    Pint : Pint is a Python package to define, operate and manipulate
+           physical quantities: the product of a numerical value and a
+           unit of measurement.
+    PintArray : PintArray is an extension type for handling physical
+                quantities with units in Pandas.
+
     Examples
     --------
     >>> import pandas as pd
@@ -649,26 +675,33 @@ def _get_nth_value(
     >>> Q_ = ureg.Quantity
 
     >>> series = pd.Series([3, 1, 4, 1, 5, 9, 2])
-    >>> _get_nth_value(series, precedes_value=4)
-    (0    3
-    1    1
-    2    4
-    dtype: int64, None)
+    >>> _get_nth_value(series, 2, 'SMALLEST')
+    2
 
     >>> df = pd.DataFrame({
     ...     'A': [3, 1, 4, 1, 5, 9, 2],
     ...     'B': [10, 20, 10, 30, 10, 40, 50]
     ... })
-    >>> _get_nth_value(df, precedes_value={'A': 4, 'B': 30})
-    {'A': (0    3
-    1    1
-    2    4
-    Name: A, dtype: int64, None),
-     'B': (0    10
-    1    20
-    2    10
-    Name: B, dtype: int64, None)}
+    >>> _get_nth_value(df, 2, 'SMALLEST')
+    {'A': 2, 'B': 20}
+
+    >>> series_with_units = pd.Series([Q_(3, 'm'), Q_(1, 'm'), Q_(4, 'm'), Q_(1, 'm')])
+    >>> _get_nth_value(series_with_units, 2, 'SMALLEST')
+    <Quantity(3, 'meter')>
+
+    >>> _get_nth_value(series, 2, 'LARGEST')
+    5
+
+    >>> _get_nth_value(df, 2, 'LARGEST')
+    {'A': 5, 'B': 40}
+
+    >>> _get_nth_value(series_with_units, 2, 'LARGEST')
+    <Quantity(3, 'meter')>
     """
+    SMALLEST = 'SMALLEST'
+    LARGEST = 'LARGEST'
+    assert value_type in {SMALLEST, LARGEST}
+
     def _get_filtered_series(
             series: pd.Series,
             precedes_value: Optional[float] = None,
@@ -694,15 +727,43 @@ def _get_nth_value(
         else:
             return series, None
 
+    def _get_nth_value_series(
+            filtered_series: pd.Series,
+            nth_value: int,
+            value_type: str,
+        ) -> pd.Series:
+        if value_type == SMALLEST:
+            return pd.Series(filtered_series.unique()).nsmallest(nth_value)
+        elif value_type == LARGEST:
+            return pd.Series(filtered_series.unique()).nlargest(nth_value)
+        else:
+            raise ValueError(f'The "value_type" parameter must be either "SMALLEST" or "LARGEST", but "{value_type}" was passed in.')
+
     if isinstance(series_or_df, pd.Series):
         series, units = _get_computation_values(series_or_df)
-        return (_get_filtered_series(series, precedes_value), units)
+        filtered_series = _get_filtered_series(series, precedes_value)
+        nth_value_series = _get_nth_value_series(filtered_series=filtered_series, nth_value=nth_value, value_type=value_type)
+
+        if len(nth_value_series) < nth_value:
+            raise ValueError(f'The input must have at least {nth_value} unique values.')
+
+        nth_value_result = nth_value_series.iloc[-1]
+
+        return nth_value_result if units is None else Q_(nth_value_result, units)
 
     elif isinstance(series_or_df, pd.DataFrame):
         result = {}
         for column in series_or_df.columns:
             series, units = _get_computation_values(series_or_df[column])
-            result[column] = (_get_filtered_series(series, precedes_value), units)
+            filtered_series = _get_filtered_series(series, precedes_value)
+            nth_value_series = _get_nth_value_series(filtered_series=filtered_series, nth_value=nth_value, value_type=value_type)
+
+            if len(nth_value_series) < nth_value:
+                result[column] = None
+            else:
+                nth_value_result = nth_value_series.iloc[-1]
+                result[column] = nth_value_result if units is None else Q_(nth_value_result, units)
+
         return result
 
     else:
@@ -789,34 +850,7 @@ def get_nth_smallest_value(
     >>> get_nth_smallest_value(series_with_units, 2)
     <Quantity(3, 'meter')>
     """
-    if isinstance(series_or_df, pd.Series):
-        filtered_series, units = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
-        nth_smallest_series = pd.Series(filtered_series.unique()).nsmallest(nth_smallest)
-
-        if len(nth_smallest_series) < nth_smallest:
-            raise ValueError(f'The input must have at least {nth_smallest} unique values.')
-
-        nth_smallest_value = nth_smallest_series.iloc[-1]
-
-        return nth_smallest_value if units is None else Q_(nth_smallest_value, units)
-
-    elif isinstance(series_or_df, pd.DataFrame):
-        result = {}
-        filtered_data = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
-        for column, data in filtered_data.items():
-            filtered_series, units = data
-            nth_smallest_series = pd.Series(filtered_series.unique()).nsmallest(nth_smallest)
-
-            if len(nth_smallest_series) < nth_smallest:
-                result[column] = None
-            else:
-                nth_smallest_value = nth_smallest_series.iloc[-1]
-                result[column] = nth_smallest_value if units is None else Q_(nth_smallest_value, units)
-
-        return result
-
-    else:
-        raise TypeError(f'Input must be a Pandas Series or DataFrame, but it was a {type(series_or_df)}')
+    return _get_nth_value(series_or_df=series_or_df, nth_value=nth_smallest, value_type='SMALLEST', precedes_value=precedes_value)
 
 
 def get_nth_largest_value(
@@ -898,31 +932,4 @@ def get_nth_largest_value(
     >>> get_nth_largest_value(series_with_units, 2)
     <Quantity(3, 'meter')>
     """
-    if isinstance(series_or_df, pd.Series):
-        filtered_series, units = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
-        nth_largest_series = pd.Series(filtered_series.unique()).nlargest(nth_largest)
-
-        if len(nth_largest_series) < nth_largest:
-            raise ValueError(f'The input must have at least {nth_largest} unique values.')
-
-        nth_largest_value = nth_largest_series.iloc[-1]
-
-        return nth_largest_value if units is None else Q_(nth_largest_value, units)
-
-    elif isinstance(series_or_df, pd.DataFrame):
-        result = {}
-        filtered_data = _get_nth_value(series_or_df=series_or_df, precedes_value=precedes_value)
-        for column, data in filtered_data.items():
-            filtered_series, units = data
-            nth_largest_series = pd.Series(filtered_series.unique()).nlargest(nth_largest)
-
-            if len(nth_largest_series) < nth_largest:
-                result[column] = None
-            else:
-                nth_largest_value = nth_largest_series.iloc[-1]
-                result[column] = nth_largest_value if units is None else Q_(nth_largest_value, units)
-
-        return result
-
-    else:
-        raise TypeError(f'Input must be a Pandas Series or DataFrame, but it was a {type(series_or_df)}')
+    return _get_nth_value(series_or_df=series_or_df, nth_value=nth_largest, value_type='LARGEST', precedes_value=precedes_value)
