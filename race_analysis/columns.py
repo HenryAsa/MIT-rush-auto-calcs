@@ -6,8 +6,11 @@ Includes functions for defining additional columns to the master
 `race_data` DataFrame.
 """
 
+from typing import Optional
+
 import numpy as np
 import pandas as pd
+import pint
 
 from .constants import MASS_VEHICLE
 from .units import u, Q_
@@ -17,8 +20,8 @@ def set_df_column(
         df: pd.DataFrame,
         units_dict: dict[str, str],
         name: str,
-        column_units: str,
         data: pd.DataFrame | pd.Series,
+        column_units: Optional[str | pint.Unit] = None,
     ) -> None:
     """
     Adds a new column to a DataFrame and assigns units to it.
@@ -35,11 +38,11 @@ def set_df_column(
         A dictionary mapping column names to their respective units.
     name : str
         The name of the new column to be added to the DataFrame.
-    column_units : str
-        The units for the new column.
     data : pd.DataFrame or pd.Series
         The data to be added as the new column.  It can be a DataFrame
         or Series.
+    column_units : str or pint.Unit, optional
+        The units for the new column if any are defined.
 
     Returns
     -------
@@ -57,7 +60,7 @@ def set_df_column(
     >>> import pandas as pd
     >>> df = pd.DataFrame({'A': [1, 2, 3]})
     >>> units_dict = {'A': 'meters'}
-    >>> set_df_column(df, units_dict, 'B', 'seconds', pd.Series([4, 5, 6]))
+    >>> set_df_column(df, units_dict, 'B', pd.Series([4, 5, 6]), 'seconds')
     >>> print(df)
        A  B
     0  1  4
@@ -66,8 +69,15 @@ def set_df_column(
     >>> print(units_dict)
     {'A': 'meters', 'B': 'seconds'}
     """
-    units_dict[name] = str(column_units)
-    df[name] = data
+    # series_units = u(str(data.loc[5].units))
+    # defined_units = u(str(column_units))
+
+    # if (series_units != defined_units) or (data.pint.units != defined_units):
+    #     raise Exception(f'UNITS DO NOT MATCH FOR {name}\n\tSERIES UNITS:\t{series_units}\n\tDEFINED UNITS:\t{defined_units}')
+    data_units = data.pint.units if column_units is None else column_units
+
+    df[name] = data.pint.to(data_units)
+    units_dict[name] = str(data_units)
 
 
 def set_delta(
@@ -130,7 +140,7 @@ def set_delta(
     """
     data_units = units[col_to_delta]
     data = df[col_to_delta].diff().fillna(0)  # Calculate time difference between measurements
-    set_df_column(df, units, delta_name, data_units, data)
+    set_df_column(df, units, delta_name, data, data_units)
 
 
 def set_time_derivative(
@@ -187,9 +197,8 @@ def set_time_derivative(
     3      7   1               3.0
     4     11   1               4.0
     """
-    derivative_units = u.parse_units(f'({units[col_to_derive]}) / ({units["Delta Time"]})')
     derivative = (df[col_to_derive].diff().fillna(0) / df['Delta Time'].replace(0, np.nan))  # Avoid division by zero
-    set_df_column(df, units, derivative_name, derivative_units, derivative)
+    set_df_column(df, units, derivative_name, derivative)
 
 
 #########################################################
@@ -216,8 +225,8 @@ def set_Distance_on_GPS_Speed(df: pd.DataFrame, units: dict[str, str]) -> None:
     """
     label = 'Distance on GPS Speed'
     data_units = 'm'
-    data = (df['GPS Speed'].shift().fillna(0) * df['Delta Time'].shift().fillna(0)).cumsum()
-    set_df_column(df, units, label, data_units, data)
+    data = ((df['GPS Speed'].shift().fillna(0) * df['Delta Time'].shift().fillna(0)).cumsum()).pint.to(data_units)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_GPS_G_Sum(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -240,8 +249,8 @@ def set_GPS_G_Sum(df: pd.DataFrame, units: dict[str, str]) -> None:
     """
     label = 'GPS G Sum'
     data_units = 'gravity'
-    data = (df['GPS LonAcc']**2 + df['GPS LatAcc']**2)**(1/2)
-    set_df_column(df, units, label, data_units, data)
+    data = ((df['GPS LonAcc']**2 + df['GPS LatAcc']**2)**(1/2)).pint.to(data_units)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_GPS_BRK_On(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -265,7 +274,7 @@ def set_GPS_BRK_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     label = 'GPS BRK On'
     data_units = 'dimensionless'
     data = pd.Series(np.where(df['GPS LonAcc'] < Q_(-0.15, 'gravity'), Q_(1, data_units), Q_(0, data_units)), dtype=f'pint[{data_units}]')
-    set_df_column(df, units, label, data_units, data)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_GPS_TPS_On(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -290,7 +299,7 @@ def set_GPS_TPS_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     label = 'GPS TPS On'
     data_units = 'dimensionless'
     data = pd.Series(np.where(df['GPS LonAcc'] > Q_(0.05, 'gravity'), Q_(1, data_units), Q_(0, data_units)), dtype=f'pint[{data_units}]')
-    set_df_column(df, units, label, data_units, data)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_GPS_CRN_On(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -314,7 +323,7 @@ def set_GPS_CRN_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     label = 'GPS CRN On'
     data_units = 'dimensionless'
     data = pd.Series(np.where(abs(df['GPS LatAcc']) > Q_(0.2, 'gravity'), Q_(1, data_units), Q_(0, data_units)), dtype=f'pint[{data_units}]')
-    set_df_column(df, units, label, data_units, data)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_GPS_CST_On(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -340,7 +349,7 @@ def set_GPS_CST_On(df: pd.DataFrame, units: dict[str, str]) -> None:
     data_units = 'dimensionless'
     zero = Q_(0, data_units)
     data = pd.Series(np.where((df['GPS BRK On'] == zero) & (df['GPS TPS On'] == zero) & (df['GPS CRN On'] == zero), Q_(1, data_units), Q_(0, data_units)), dtype=f'pint[{data_units}]')
-    set_df_column(df, units, label, data_units, data)
+    set_df_column(df, units, label, data, data_units)
 
 #########################################################
 
@@ -434,7 +443,7 @@ def set_vehicle_kinetic_energy(
     label = 'Vehicle Kinetic Energy'
     data_units = 'joules'
     data = pd.Series(data=(0.5 * mass * df['GPS Speed']**2), dtype=f'pint[{data_units}]')
-    set_df_column(df, units, label, data_units, data)
+    set_df_column(df, units, label, data, data_units)
 
 
 def set_delta_vehicle_kinetic_energy(df: pd.DataFrame, units: dict[str, str]) -> None:
@@ -499,8 +508,12 @@ def set_vehicle_power(df: pd.DataFrame, units: dict[str, str]) -> None:
     3     3                     90   50.0
 
     """
-    label = 'Power'
+    label = 'Power - dKE'
     set_time_derivative(df, units, 'Vehicle Kinetic Energy', label)
+
+    label = 'Power - mav'
+    new_dataset = MASS_VEHICLE * df['GPS LonAcc'] * df['GPS Speed']
+    set_df_column(df, units, label, new_dataset, 'watts')
 
 #############################################
 

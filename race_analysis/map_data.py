@@ -287,11 +287,11 @@ def plot_map(
     #############################################
 
     # Create a plot with an appropriate projection
-    fig, ax = plt.subplots(figsize=figsize, dpi=200, subplot_kw={'projection': tile_source.value.crs})
+    fig, ax = plt.subplots(figsize=figsize, dpi=300, subplot_kw={'projection': tile_source.value.crs})
     ax.set_extent([min(new_df[COL_LONGITUDE]) - map_spacing, max(new_df[COL_LONGITUDE]) + map_spacing, min(new_df[COL_LATITUDE]) - map_spacing, max(new_df[COL_LATITUDE]) + map_spacing], crs=ccrs.Geodetic())
 
     # Add the tile layer
-    zoom_level = 20
+    zoom_level = 21
     ax.add_image(tile_source.value, zoom_level)
 
     point_size = 10
